@@ -139,6 +139,7 @@ venv.bak/
 waf
 .vscode
 .waf*
+*.pyc
 
 ## Core latex/pdflatex auxiliary files:
 *.aux

@@ -1,21 +1,12 @@
-#include "magnum_app.hpp"
-#include "drawable_obj.hpp"
+#include "magnum_dynamics/magnum_app.hpp"
+#include "magnum_dynamics/drawable_obj.hpp"
 
-namespace Magnum {
-    using namespace Math::Literals;
-
-    MagnumApp::MagnumApp(const Arguments& arguments) : 
-        Platform::Application{arguments, Configuration{}
-            .setTitle("Magnum Viewer Example")
-            .setWindowFlags(Configuration::WindowFlag::Resizable)}
+namespace magnum_dynamics {
+    MagnumApp::MagnumApp(const Arguments& arguments) : Platform::Application{arguments, Configuration{}.setTitle("Magnum Viewer Example").setWindowFlags(Configuration::WindowFlag::Resizable)}
     {
-        if (arguments.argc > 1){
+        if (arguments.argc > 1) {
             Utility::Arguments args;
-            args.addArgument("file").setHelp("file", "file to load")
-                .addOption("importer", "AnySceneImporter").setHelp("importer", "importer plugin to use")
-                .addSkippedPrefix("magnum", "engine-specific options")
-                .setGlobalHelp("Displays a 3D scene file provided on command line.")
-                .parse(arguments.argc, arguments.argv);
+            args.addArgument("file").setHelp("file", "file to load").addOption("importer", "AnySceneImporter").setHelp("importer", "importer plugin to use").addSkippedPrefix("magnum", "engine-specific options").setGlobalHelp("Displays a 3D scene file provided on command line.").parse(arguments.argc, arguments.argv);
 
             importScene(args.value("file"), args.value("importer"));
         }
@@ -106,21 +97,22 @@ namespace Magnum {
     {
         PluginManager::Manager<Trade::AbstractImporter> manager;
         Containers::Pointer<Trade::AbstractImporter> importer = manager.loadAndInstantiate(importer_type);
-        if(!importer) std::exit(1);
+        if (!importer)
+            std::exit(1);
 
         Debug{} << "Opening file" << file;
 
         /* Load file */
-        if(!importer->openFile(file))
+        if (!importer->openFile(file))
             std::exit(4);
 
         /* Load all textures. Textures that fail to load will be NullOpt. */
         Containers::Array<Containers::Optional<GL::Texture2D>> textures{importer->textureCount()};
-        for(UnsignedInt i = 0; i != importer->textureCount(); ++i) {
+        for (UnsignedInt i = 0; i != importer->textureCount(); ++i) {
             Debug{} << "Importing texture" << i << importer->textureName(i);
 
             Containers::Optional<Trade::TextureData> textureData = importer->texture(i);
-            if(!textureData || textureData->type() != Trade::TextureData::Type::Texture2D) {
+            if (!textureData || textureData->type() != Trade::TextureData::Type::Texture2D) {
                 Warning{} << "Cannot load texture properties, skipping";
                 continue;
             }
@@ -129,9 +121,9 @@ namespace Magnum {
 
             Containers::Optional<Trade::ImageData2D> imageData = importer->image2D(textureData->image());
             GL::TextureFormat format;
-            if(imageData && imageData->format() == PixelFormat::RGB8Unorm)
+            if (imageData && imageData->format() == PixelFormat::RGB8Unorm)
                 format = GL::TextureFormat::RGB8;
-            else if(imageData && imageData->format() == PixelFormat::RGBA8Unorm)
+            else if (imageData && imageData->format() == PixelFormat::RGBA8Unorm)
                 format = GL::TextureFormat::RGBA8;
             else {
                 Warning{} << "Cannot load texture image, skipping";
@@ -155,11 +147,11 @@ namespace Magnum {
         data will be stored directly in objects later, so save them only
         temporarily. */
         Containers::Array<Containers::Optional<Trade::PhongMaterialData>> materials{importer->materialCount()};
-        for(UnsignedInt i = 0; i != importer->materialCount(); ++i) {
+        for (UnsignedInt i = 0; i != importer->materialCount(); ++i) {
             Debug{} << "Importing material" << i << importer->materialName(i);
 
             Containers::Pointer<Trade::AbstractMaterialData> materialData = importer->material(i);
-            if(!materialData || materialData->type() != Trade::MaterialType::Phong) {
+            if (!materialData || materialData->type() != Trade::MaterialType::Phong) {
                 Warning{} << "Cannot load material, skipping";
                 continue;
             }
@@ -169,11 +161,11 @@ namespace Magnum {
 
         /* Load all meshes. Meshes that fail to load will be NullOpt. */
         Containers::Array<Containers::Optional<GL::Mesh>> meshes{importer->mesh3DCount()};
-        for(UnsignedInt i = 0; i != importer->mesh3DCount(); ++i) {
+        for (UnsignedInt i = 0; i != importer->mesh3DCount(); ++i) {
             Debug{} << "Importing mesh" << i << importer->mesh3DName(i);
 
             Containers::Optional<Trade::MeshData3D> meshData = importer->mesh3D(i);
-            if(!meshData || !meshData->hasNormals() || meshData->primitive() != MeshPrimitive::Triangles) {
+            if (!meshData || !meshData->hasNormals() || meshData->primitive() != MeshPrimitive::Triangles) {
                 Warning{} << "Cannot load the mesh, skipping";
                 continue;
             }
@@ -183,32 +175,33 @@ namespace Magnum {
         }
 
         /* Load the scene */
-        if(importer->defaultScene() != -1) {
+        if (importer->defaultScene() != -1) {
             Debug{} << "Adding default scene" << importer->sceneName(importer->defaultScene());
 
             Containers::Optional<Trade::SceneData> sceneData = importer->scene(importer->defaultScene());
-            if(!sceneData) {
+            if (!sceneData) {
                 Error{} << "Cannot load scene, exiting";
                 return;
             }
 
             /* Recursively add all children */
-            for(UnsignedInt objectId: sceneData->children3D())
+            for (UnsignedInt objectId : sceneData->children3D())
                 addObject(*importer, _manipulator, meshes, materials, textures, objectId);
         }
     }
 
     void MagnumApp::addObject(
-            Trade::AbstractImporter& importer, 
-            Object3D& parent, 
-            Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
-            Containers::ArrayView<Containers::Optional<Trade::PhongMaterialData>> materials,
-            Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
-            UnsignedInt i) {
-        
+        Trade::AbstractImporter& importer,
+        Object3D& parent,
+        Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
+        Containers::ArrayView<Containers::Optional<Trade::PhongMaterialData>> materials,
+        Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
+        UnsignedInt i)
+    {
+
         Debug{} << "Importing object" << i << importer.object3DName(i);
         Containers::Pointer<Trade::ObjectData3D> objectData = importer.object3D(i);
-        if(!objectData) {
+        if (!objectData) {
             Error{} << "Cannot import object, skipping";
             return;
         }
@@ -220,30 +213,32 @@ namespace Magnum {
         auto* drawble = new DrawableObject{_shaderManager, *object, _drawables};
 
         /* Add a drawable if the object has a mesh and the mesh is loaded */
-        if(objectData->instanceType() == Trade::ObjectInstanceType3D::Mesh && objectData->instance() != -1 && meshes[objectData->instance()]) {
+        if (objectData->instanceType() == Trade::ObjectInstanceType3D::Mesh && objectData->instance() != -1 && meshes[objectData->instance()]) {
             const Int materialId = static_cast<Trade::MeshObjectData3D*>(objectData.get())->material();
 
             /* Material not available / not loaded, use a default material */
-            if(materialId == -1 || !materials[materialId]) {
+            if (materialId == -1 || !materials[materialId]) {
                 (*drawble)
                     .setMeshes(*meshes[objectData->instance()])
                     .setColor(0xffffff_rgbf);
 
-            /* Textured material. If the texture failed to load, again just use a
+                /* Textured material. If the texture failed to load, again just use a
             default colored material. */
-            } else if(materials[materialId]->flags() & Trade::PhongMaterialData::Flag::DiffuseTexture) {
+            }
+            else if (materials[materialId]->flags() & Trade::PhongMaterialData::Flag::DiffuseTexture) {
                 Containers::Optional<GL::Texture2D>& texture = textures[materials[materialId]->diffuseTexture()];
-                if(texture)
+                if (texture)
                     (*drawble)
                         .setMeshes(*meshes[objectData->instance()])
                         .setTextures(*texture);
                 else
                     (*drawble)
-                    .setMeshes(*meshes[objectData->instance()])
-                    .setColor(0xffffff_rgbf);
+                        .setMeshes(*meshes[objectData->instance()])
+                        .setColor(0xffffff_rgbf);
 
-            /* Color-only material */
-            } else {
+                /* Color-only material */
+            }
+            else {
                 (*drawble)
                     .setMeshes(*meshes[objectData->instance()])
                     .setColor(materials[materialId]->diffuseColor());
@@ -251,56 +246,65 @@ namespace Magnum {
         }
 
         /* Recursively add children */
-        for(std::size_t id: objectData->children())
+        for (std::size_t id : objectData->children())
             addObject(importer, *object, meshes, materials, textures, id);
     }
 
-    void MagnumApp::viewportEvent(ViewportEvent& event) {
+    void MagnumApp::viewportEvent(ViewportEvent& event)
+    {
         GL::defaultFramebuffer.setViewport({{}, event.framebufferSize()});
         _camera->setViewport(event.windowSize());
     }
 
-    void MagnumApp::mousePressEvent(MouseEvent& event) {
-        if(event.button() == MouseEvent::Button::Left)
+    void MagnumApp::mousePressEvent(MouseEvent& event)
+    {
+        if (event.button() == MouseEvent::Button::Left)
             _previousPosition = positionOnSphere(event.position());
     }
 
-    void MagnumApp::mouseReleaseEvent(MouseEvent& event) {
-        if(event.button() == MouseEvent::Button::Left)
+    void MagnumApp::mouseReleaseEvent(MouseEvent& event)
+    {
+        if (event.button() == MouseEvent::Button::Left)
             _previousPosition = Vector3();
     }
 
-    void MagnumApp::mouseScrollEvent(MouseScrollEvent& event) {
-        if(!event.offset().y()) return;
+    void MagnumApp::mouseScrollEvent(MouseScrollEvent& event)
+    {
+        if (!event.offset().y())
+            return;
 
         /* Distance to origin */
         const Float distance = _cameraObject.transformation().translation().z();
 
         /* Move 15% of the distance back or forward */
         _cameraObject.translate(Vector3::zAxis(
-            distance*(1.0f - (event.offset().y() > 0 ? 1/0.85f : 0.85f))));
+            distance * (1.0f - (event.offset().y() > 0 ? 1 / 0.85f : 0.85f))));
 
         redraw();
     }
 
-    Vector3 MagnumApp::positionOnSphere(const Vector2i& position) const {
-        const Vector2 positionNormalized = Vector2{position}/Vector2{_camera->viewport()} - Vector2{0.5f};
+    Vector3 MagnumApp::positionOnSphere(const Vector2i& position) const
+    {
+        const Vector2 positionNormalized = Vector2{position} / Vector2{_camera->viewport()} - Vector2{0.5f};
         const Float length = positionNormalized.length();
         const Vector3 result(length > 1.0f ? Vector3(positionNormalized, 0.0f) : Vector3(positionNormalized, 1.0f - length));
-        return (result*Vector3::yScale(-1.0f)).normalized();
+        return (result * Vector3::yScale(-1.0f)).normalized();
     }
 
-    void MagnumApp::mouseMoveEvent(MouseMoveEvent& event) {
-        if(!(event.buttons() & MouseMoveEvent::Button::Left)) return;
+    void MagnumApp::mouseMoveEvent(MouseMoveEvent& event)
+    {
+        if (!(event.buttons() & MouseMoveEvent::Button::Left))
+            return;
 
         const Vector3 currentPosition = positionOnSphere(event.position());
         const Vector3 axis = Math::cross(_previousPosition, currentPosition);
 
-        if(_previousPosition.length() < 0.001f || axis.length() < 0.001f) return;
+        if (_previousPosition.length() < 0.001f || axis.length() < 0.001f)
+            return;
 
         _manipulator.rotate(Math::angle(_previousPosition, currentPosition), axis.normalized());
         _previousPosition = currentPosition;
 
         redraw();
     }
-} // namespace Magnum
+} // namespace magnum_dynamics

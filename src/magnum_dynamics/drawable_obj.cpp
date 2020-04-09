@@ -1,6 +1,6 @@
-#include "drawable_obj.hpp"
+#include "magnum_dynamics/drawable_obj.hpp"
 
-namespace Magnum {
+namespace magnum_dynamics {
     DrawableObject::DrawableObject(ShaderManager& shader, Object3D& object, SceneGraph::DrawableGroup3D& group)
         : SceneGraph::Drawable3D{object, &group},
           _colorShader{shader.get<Shaders::Phong>("color")},
@@ -38,4 +38,4 @@ namespace Magnum {
 
         _mesh.draw(*_colorShader);
     }
-} // namespace Magnum
+} // namespace magnum_dynamics

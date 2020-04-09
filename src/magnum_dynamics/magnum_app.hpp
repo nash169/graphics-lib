@@ -1,7 +1,10 @@
+#ifndef MAGNUMDYNAMICS_MAGNUMAPP_HPP
+#define MAGNUMDYNAMICS_MAGNUMAPP_HPP
+
 // Corrade
-#include <Corrade/Containers/Reference.h>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Reference.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/Utility/Arguments.h>
 #include <Corrade/Utility/DebugStl.h>
@@ -16,9 +19,9 @@
 #include <Magnum/GL/TextureFormat.h>
 
 // MeshTools
+#include <Magnum/MeshTools/Compile.h>
 #include <Magnum/MeshTools/CompressIndices.h>
 #include <Magnum/MeshTools/Interleave.h>
-#include <Magnum/MeshTools/Compile.h>
 
 // Platform
 #include <Magnum/Platform/Sdl2Application.h>
@@ -31,29 +34,30 @@
 #include <Magnum/SceneGraph/Drawable.h>
 #include <Magnum/SceneGraph/MatrixTransformation3D.h>
 #include <Magnum/SceneGraph/Object.hpp>
-#include <Magnum/SceneGraph/SceneGraph.h>
 #include <Magnum/SceneGraph/Scene.h>
+#include <Magnum/SceneGraph/SceneGraph.h>
 
 // Shader
 #include <Magnum/Shaders/Phong.h>
 
 // Trade
-#include <Magnum/Trade/MeshData3D.h>
-#include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
+#include <Magnum/Trade/MeshData3D.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
+#include <Magnum/Trade/PhongMaterialData.h>
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
 
 // Others
-#include <Magnum/ResourceManager.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Mesh.h>
 #include <Magnum/PixelFormat.h>
+#include <Magnum/ResourceManager.h>
 #include <iostream>
 
-namespace Magnum {
+namespace magnum_dynamics {
+    using namespace Magnum;
     using namespace Math::Literals;
 
     typedef SceneGraph::Scene<SceneGraph::MatrixTransformation3D> Scene3D;
@@ -70,8 +74,8 @@ namespace Magnum {
         void Update();
         void importScene(const std::string& file, const std::string& importer_type);
         void addObject(
-            Trade::AbstractImporter& importer, 
-            Object3D& parent, 
+            Trade::AbstractImporter& importer,
+            Object3D& parent,
             Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
             Containers::ArrayView<Containers::Optional<Trade::PhongMaterialData>> materials,
             Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
@@ -99,4 +103,6 @@ namespace Magnum {
 
         Vector3 _previousPosition;
     };
-} // namespace Magnum
+} // namespace magnum_dynamics
+
+#endif // MAGNUMDYNAMICS_MAGNUMAPP_HPP

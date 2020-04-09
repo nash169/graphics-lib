@@ -1,3 +1,6 @@
+#ifndef MAGNUMDYNAMICS_DRAWABLEOBJ_HPP
+#define MAGNUMDYNAMICS_DRAWABLEOBJ_HPP
+
 #include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/Arguments.h>
 #include <Corrade/Utility/Directory.h>
@@ -18,9 +21,10 @@
 #include <Magnum/Shaders/Phong.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 
-namespace Magnum {
+namespace magnum_dynamics {
+    using namespace Magnum;
     using namespace Math::Literals;
-    
+
     typedef SceneGraph::Object<SceneGraph::MatrixTransformation3D> Object3D;
     typedef ResourceManager<Shaders::Phong> ShaderManager;
 
@@ -43,5 +47,6 @@ namespace Magnum {
         GL::Texture2D _texture;
         Color4 _color;
     };
+} // namespace magnum_dynamics
 
-} // namespace Magnum
+#endif // MAGNUMDYNAMICS_DRAWABLEOBJ_HPP
