@@ -67,12 +67,29 @@ namespace magnum_dynamics {
     class MagnumApp : public Platform::Application {
     public:
         explicit MagnumApp(const Arguments& arguments);
+
+        // Import primitives
         void addPrimitive(const Trade::MeshData3D& primitive, const Matrix4& transformation, Color4 color);
 
-    private:
+        // Import scene
+        void importScene(const std::string& file, const std::string& importer_type = "AnySceneImporter");
+
+        // Get object
+        std::vector<Object3D*> objects()
+        {
+            return _objects;
+        }
+
+        // Set object
+        void setObjects()
+        {
+        }
+
+    protected:
         void drawEvent() override;
+
         void Update();
-        void importScene(const std::string& file, const std::string& importer_type);
+
         void addObject(
             Trade::AbstractImporter& importer,
             Object3D& parent,
@@ -82,9 +99,13 @@ namespace magnum_dynamics {
             UnsignedInt i);
 
         void viewportEvent(ViewportEvent& event) override;
+
         void mousePressEvent(MouseEvent& event) override;
+
         void mouseReleaseEvent(MouseEvent& event) override;
+
         void mouseMoveEvent(MouseMoveEvent& event) override;
+
         void mouseScrollEvent(MouseScrollEvent& event) override;
 
         Vector3 positionOnSphere(const Vector2i& position) const;

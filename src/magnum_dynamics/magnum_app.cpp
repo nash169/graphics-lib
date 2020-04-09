@@ -93,7 +93,7 @@ namespace magnum_dynamics {
         redraw();
     }
 
-    void MagnumApp::importScene(const std::string& file, const std::string& importer_type = "AnySceneImporter")
+    void MagnumApp::importScene(const std::string& file, const std::string& importer_type)
     {
         PluginManager::Manager<Trade::AbstractImporter> manager;
         Containers::Pointer<Trade::AbstractImporter> importer = manager.loadAndInstantiate(importer_type);
