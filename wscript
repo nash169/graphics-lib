@@ -17,7 +17,7 @@ def options(opt):
     opt.load("compiler_cxx")
 
     # Load tools options
-    opt.load("flags corrade magnum", tooldir="waf_tools")
+    opt.load("flags magnum", tooldir="waf_tools")
 
     # Add options
     opt.add_option("--shared", action="store_true", help="build shared library")
@@ -32,7 +32,7 @@ def configure(cfg):
     cfg.load("compiler_cxx")
 
     # Load tools configurations
-    cfg.load("flags corrade magnum", tooldir="waf_tools")
+    cfg.load("flags magnum", tooldir="waf_tools")
 
     # Remove duplicates
     cfg.get_env()["libs"] = list(set(cfg.get_env()["libs"]))
