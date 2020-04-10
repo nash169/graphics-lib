@@ -113,38 +113,35 @@ namespace magnum_dynamics {
             }
         }
 
-        // // Import primitives
-        // void addPrimitive(const Trade::MeshData3D& primitive, const Matrix4& transformation, Color4 color)
-        // {
-        //     GL::Buffer vertices;
-        //     vertices.setData(MeshTools::interleave(primitive.positions(0), primitive.normals(0)));
+        // Import primitives
+        void addPrimitive(const Trade::MeshData3D& primitive, const Matrix4& transformation, Color4 color)
+        {
+            GL::Buffer vertices;
+            vertices.setData(MeshTools::interleave(primitive.positions(0), primitive.normals(0)));
 
-        //     Containers::Array<char> indexData;
-        //     MeshIndexType indexType;
-        //     UnsignedInt indexStart, indexEnd;
-        //     std::tie(indexData, indexType, indexStart, indexEnd) = MeshTools::compressIndices(primitive.indices());
-        //     GL::Buffer indices;
-        //     indices.setData(indexData);
+            Containers::Array<char> indexData;
+            MeshIndexType indexType;
+            UnsignedInt indexStart, indexEnd;
+            std::tie(indexData, indexType, indexStart, indexEnd) = MeshTools::compressIndices(primitive.indices());
+            GL::Buffer indices;
+            indices.setData(indexData);
 
-        //     GL::Mesh mesh;
+            GL::Mesh mesh;
 
-        //     mesh
-        //         .setPrimitive(primitive.primitive())
-        //         .setCount(primitive.indices().size())
-        //         .addVertexBuffer(std::move(vertices), 0, Shaders::Phong::Position{}, Shaders::Phong::Normal{})
-        //         .setIndexBuffer(std::move(indices), 0, indexType, indexStart, indexEnd);
+            mesh
+                .setPrimitive(primitive.primitive())
+                .setCount(primitive.indices().size())
+                .addVertexBuffer(std::move(vertices), 0, Shaders::Phong::Position{}, Shaders::Phong::Normal{})
+                .setIndexBuffer(std::move(indices), 0, indexType, indexStart, indexEnd);
 
-        //     auto* object = new Object3D{&_manipulator};
-        //     object->setTransformation(transformation);
+            auto* object = new Object3D{&_manipulator};
+            object->setTransformation(transformation);
 
-        //     auto* drawble = new DrawableObject{_shaderManager, *object, _drawables};
-        //     (*drawble)
-        //         .setMeshes(mesh)
-        //         .setColor(color);
+            new ColoredDrawable{*object, _drawables, _coloredShader, mesh, color};
 
-        //     _objects.push_back(object);
-        //     _transformations.push_back(transformation);
-        // }
+            _objects.push_back(object);
+            _transformations.push_back(transformation);
+        }
 
         // Import scene
         void importScene(const std::string& file, const std::string& importer_type = "AnySceneImporter")
@@ -163,7 +160,7 @@ namespace magnum_dynamics {
                 std::exit(4);
 
             /* TEXTURES */
-            _textures = Containers::Array<Containers::Optional<GL::Texture2D>>{importer->textureCount()};
+            Containers::Array<Containers::Optional<GL::Texture2D>> textures{importer->textureCount()};
 
             for (UnsignedInt i = 0; i != importer->textureCount(); ++i) {
                 // Import texture
@@ -197,7 +194,7 @@ namespace magnum_dynamics {
                     .setSubImage(0, {}, *imageData)
                     .generateMipmap();
 
-                _textures[i] = std::move(texture);
+                textures[i] = std::move(texture);
             }
 
             /* MATERIALS */
@@ -216,7 +213,7 @@ namespace magnum_dynamics {
             }
 
             /* MESHES */
-            _meshes = Containers::Array<Containers::Optional<GL::Mesh>>{importer->meshCount()};
+            Containers::Array<Containers::Optional<GL::Mesh>> meshes{importer->meshCount()};
 
             for (UnsignedInt i = 0; i != importer->mesh3DCount(); ++i) {
                 Debug{} << "Importing mesh" << i << importer->mesh3DName(i);
@@ -228,7 +225,7 @@ namespace magnum_dynamics {
                 }
 
                 /* Compile the mesh */
-                _meshes[i] = MeshTools::compile(*meshData);
+                meshes[i] = MeshTools::compile(*meshData);
             }
 
             /* Load the scene */
@@ -243,10 +240,13 @@ namespace magnum_dynamics {
 
                 /* Recursively add all children */
                 for (UnsignedInt objectId : sceneData->children3D())
-                    addObject(*importer, materials, _manipulator, objectId);
+                    addObject(*importer, meshes, textures, materials, _manipulator, objectId);
             }
-            else if (!_meshes.empty() && _meshes[0])
-                new ColoredDrawable{_manipulator, _drawables, _coloredShader, *_meshes[0]};
+            else if (!meshes.empty() && meshes[0]) {
+                auto* object = new Object3D{&_manipulator};
+                new ColoredDrawable{*object, _drawables, _coloredShader, *meshes[0]};
+                _objects.push_back(object);
+            }
         }
 
     protected:
@@ -254,12 +254,17 @@ namespace magnum_dynamics {
         {
             GL::defaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
 
+            _transformations[0] = _transformations[0] * Matrix4::rotation(0.01_radf, Vector3::xAxis());
+            _objects[0]->setTransformation(_transformations[0]);
+
             _camera->draw(_drawables);
 
             swapBuffers();
+
+            redraw();
         }
 
-        void addObject(Trade::AbstractImporter& importer, Containers::ArrayView<const Containers::Optional<Trade::PhongMaterialData>> materials, Object3D& parent, UnsignedInt i)
+        void addObject(Trade::AbstractImporter& importer, Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes, Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures, Containers::ArrayView<const Containers::Optional<Trade::PhongMaterialData>> materials, Object3D& parent, UnsignedInt i)
         {
             // Import the object information
             Debug{} << "Importing object" << i << importer.object3DName(i);
@@ -274,28 +279,30 @@ namespace magnum_dynamics {
             object->setTransformation(objectData->transformation());
 
             /* Add a drawable if the object has a mesh and the mesh is loaded */
-            if (objectData->instanceType() == Trade::ObjectInstanceType3D::Mesh && objectData->instance() != -1 && _meshes[objectData->instance()]) {
+            if (objectData->instanceType() == Trade::ObjectInstanceType3D::Mesh && objectData->instance() != -1 && meshes[objectData->instance()]) {
                 const Int materialId = static_cast<Trade::MeshObjectData3D*>(objectData.get())->material();
 
                 /* Material not available / not loaded, use a default material */
                 if (materialId == -1 || !materials[materialId])
-                    new ColoredDrawable{*object, _drawables, _coloredShader, *_meshes[objectData->instance()]};
+                    new ColoredDrawable{*object, _drawables, _coloredShader, *meshes[objectData->instance()]};
                 /* Textured material. If the texture failed to load, again just use adefault colored material. */
                 else if (materials[materialId]->flags() & Trade::PhongMaterialData::Flag::DiffuseTexture) {
-                    Containers::Optional<GL::Texture2D>& texture = _textures[materials[materialId]->diffuseTexture()];
+                    Containers::Optional<GL::Texture2D>& texture = textures[materials[materialId]->diffuseTexture()];
                     if (texture)
-                        new TexturedDrawable{*object, _drawables, _coloredShader, *_meshes[objectData->instance()], *texture};
+                        new TexturedDrawable{*object, _drawables, _coloredShader, *meshes[objectData->instance()], *texture};
                     else
-                        new ColoredDrawable{*object, _drawables, _coloredShader, *_meshes[objectData->instance()]};
+                        new ColoredDrawable{*object, _drawables, _coloredShader, *meshes[objectData->instance()]};
                 }
                 /* Color-only material */
                 else
-                    new ColoredDrawable{*object, _drawables, _coloredShader, *_meshes[objectData->instance()], materials[materialId]->diffuseColor()};
+                    new ColoredDrawable{*object, _drawables, _coloredShader, *meshes[objectData->instance()], materials[materialId]->diffuseColor()};
             }
+
+            _objects.push_back(object);
 
             /* Recursively add children */
             for (std::size_t id : objectData->children())
-                addObject(importer, materials, *object, id);
+                addObject(importer, meshes, textures, materials, *object, id);
         }
 
         void viewportEvent(ViewportEvent& event) override;
@@ -309,11 +316,12 @@ namespace magnum_dynamics {
 
         Scene3D _scene;
         Object3D _manipulator, _cameraObject;
+
+        std::vector<Object3D*> _objects;
+        std::vector<Matrix4> _transformations;
+
         SceneGraph::Camera3D* _camera;
         SceneGraph::DrawableGroup3D _drawables;
-
-        Containers::Array<Containers::Optional<GL::Mesh>> _meshes;
-        Containers::Array<Containers::Optional<GL::Texture2D>> _textures;
 
         Vector3 _previousPosition;
     };

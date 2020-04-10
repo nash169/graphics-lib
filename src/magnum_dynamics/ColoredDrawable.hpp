@@ -16,7 +16,11 @@ namespace magnum_dynamics {
 
     class ColoredDrawable : public SceneGraph::Drawable3D {
     public:
-        explicit ColoredDrawable(Object3D& object, SceneGraph::DrawableGroup3D& group, Shaders::Phong& shader, GL::Mesh& mesh, const Color4& color = 0xffffff_rgbf) : SceneGraph::Drawable3D{object, &group}, _shader(shader), _mesh(mesh), _color{color} {}
+        explicit ColoredDrawable(Object3D& object, SceneGraph::DrawableGroup3D& group, Shaders::Phong& shader, GL::Mesh& mesh, const Color4& color = 0xffffff_rgbf) : SceneGraph::Drawable3D{object, &group}, _shader(shader)
+        {
+            _mesh = std::move(mesh);
+            _color = std::move(color);
+        }
 
     private:
         void draw(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera) override
@@ -31,7 +35,7 @@ namespace magnum_dynamics {
         }
 
         Shaders::Phong& _shader;
-        GL::Mesh& _mesh;
+        GL::Mesh _mesh;
         Color4 _color;
     };
 } // namespace magnum_dynamics
