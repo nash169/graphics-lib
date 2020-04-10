@@ -1,4 +1,4 @@
-#include <magnum_dynamics/magnum_app.hpp>
+#include <magnum_dynamics/MagnumApp.hpp>
 
 using namespace Magnum;
 using namespace Math::Literals;
@@ -11,9 +11,7 @@ int main(int argc, char** argv)
     // const Trade::MeshData3D cube = Primitives::cubeSolid();
     // app.addPrimitive(cube, Matrix4::translation(Vector3::xAxis(-3.0f)), 0xff0000_rgbf);
     // app.addPrimitive(cube, Matrix4::translation(Vector3::xAxis(3.0f)), 0x00ff00_rgbf);
-    app.importScene("rsc/s9_drone.glb");
-
-    std::cout << app.objects().size() << std::endl;
+    app.importScene("rsc/drone.stl");
 
     return app.exec();
 }
