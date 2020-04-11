@@ -4,43 +4,30 @@
 // Corrade
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
-#include <Corrade/Containers/Reference.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/Utility/Arguments.h>
 #include <Corrade/Utility/DebugStl.h>
-#include <Corrade/Utility/Directory.h>
-
-// GL
+#include <Magnum/EigenIntegration/Integration.h>
 #include <Magnum/GL/Buffer.h>
 #include <Magnum/GL/DefaultFramebuffer.h>
 #include <Magnum/GL/Mesh.h>
 #include <Magnum/GL/Renderer.h>
 #include <Magnum/GL/Texture.h>
 #include <Magnum/GL/TextureFormat.h>
-
-// MeshTools
+#include <Magnum/ImageView.h>
 #include <Magnum/MeshTools/Compile.h>
 #include <Magnum/MeshTools/CompressIndices.h>
 #include <Magnum/MeshTools/Interleave.h>
-
-// Platform
+#include <Magnum/PixelFormat.h>
 #include <Magnum/Platform/Sdl2Application.h>
-
-// Primitives
 #include <Magnum/Primitives/Cube.h>
-
-// SceneGraph
 #include <Magnum/SceneGraph/Camera.h>
 #include <Magnum/SceneGraph/Drawable.h>
 #include <Magnum/SceneGraph/MatrixTransformation3D.h>
 #include <Magnum/SceneGraph/Object.hpp>
 #include <Magnum/SceneGraph/Scene.h>
 #include <Magnum/SceneGraph/SceneGraph.h>
-
-// Shader
 #include <Magnum/Shaders/Phong.h>
-
-// Trade
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/MeshData3D.h>
@@ -49,15 +36,10 @@
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
 
-// Others
-#include <Magnum/ImageView.h>
-#include <Magnum/Mesh.h>
-#include <Magnum/PixelFormat.h>
-#include <Magnum/ResourceManager.h>
+#include <Eigen/Core>
 
 #include "magnum_dynamics/ColoredDrawable.hpp"
 #include "magnum_dynamics/TexturedDrawable.hpp"
-#include <iostream>
 
 namespace magnum_dynamics {
     using namespace Magnum;

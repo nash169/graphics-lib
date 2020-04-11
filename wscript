@@ -32,6 +32,10 @@ def configure(cfg):
     cfg.load("compiler_cxx")
 
     # Load tools configurations
+    cfg.options.magnum_components = (
+        "Sdl2Application,Primitives,Shaders,MeshTools,SceneGraph,Trade,GL"
+    )
+    cfg.options.magnum_integrations = "Eigen"
     cfg.load("flags magnum", tooldir="waf_tools")
 
     # Remove duplicates
