@@ -20,8 +20,12 @@ def options(opt):
     opt.load("flags magnum", tooldir="waf_tools")
 
     # Add options
-    opt.add_option("--shared", action="store_true", help="build shared library")
-    opt.add_option("--static", action="store_true", help="build static library")
+    opt.add_option(
+        "--shared", action="store_true", help="build shared library", dest="shared"
+    )
+    opt.add_option(
+        "--static", action="store_true", help="build static library", dest="static"
+    )
 
 
 def configure(cfg):

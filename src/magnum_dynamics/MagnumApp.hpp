@@ -41,6 +41,8 @@
 #include "magnum_dynamics/ColoredDrawable.hpp"
 #include "magnum_dynamics/TexturedDrawable.hpp"
 
+#include <iostream>
+
 namespace magnum_dynamics {
     using namespace Magnum;
     using namespace Math::Literals;
@@ -55,7 +57,7 @@ namespace magnum_dynamics {
             // Create the camera object for the scene
             _cameraObject
                 .setParent(&_scene)
-                .translate(Vector3::zAxis(10.0f));
+                .translate(Vector3::zAxis(30.0f));
             (*(_camera = new SceneGraph::Camera3D{_cameraObject}))
                 .setAspectRatioPolicy(SceneGraph::AspectRatioPolicy::Extend)
                 .setProjectionMatrix(Matrix4::perspectiveProjection(35.0_degf, 1.0f, 0.01f, 1000.0f))
@@ -227,6 +229,7 @@ namespace magnum_dynamics {
             else if (!meshes.empty() && meshes[0]) {
                 auto* object = new Object3D{&_manipulator};
                 new ColoredDrawable{*object, _drawables, _coloredShader, *meshes[0]};
+                _transformations.push_back(object->transformation());
                 _objects.push_back(object);
             }
         }
@@ -237,7 +240,11 @@ namespace magnum_dynamics {
             GL::defaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
 
             _transformations[0] = _transformations[0] * Matrix4::rotation(0.01_radf, Vector3::xAxis());
-            _objects[0]->setTransformation(_transformations[0]);
+            _transformations[1] = _transformations[1] * Matrix4::rotation(0.01_radf, Vector3::yAxis());
+            _transformations[2] = _transformations[2] * Matrix4::rotation(0.01_radf, Vector3::zAxis());
+
+            for (size_t i = 0; i < 3; i++)
+                _objects[i]->setTransformation(_transformations[i]);
 
             _camera->draw(_drawables);
 
@@ -259,6 +266,7 @@ namespace magnum_dynamics {
             // Create the object
             auto* object = new Object3D{&parent};
             object->setTransformation(objectData->transformation());
+            _transformations.push_back(object->transformation());
 
             /* Add a drawable if the object has a mesh and the mesh is loaded */
             if (objectData->instanceType() == Trade::ObjectInstanceType3D::Mesh && objectData->instance() != -1 && meshes[objectData->instance()]) {
