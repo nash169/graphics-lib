@@ -140,6 +140,7 @@ waf
 .vscode
 .waf*
 *.pyc
+.lock-waf_darwin_build
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
