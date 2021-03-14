@@ -1,6 +1,7 @@
 #ifndef MAGNUMDYNAMICS_COLOREDDRAWABLE_HPP
 #define MAGNUMDYNAMICS_COLOREDDRAWABLE_HPP
 
+#include <Magnum/Math/Color.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/SceneGraph/Camera.h>
 #include <Magnum/SceneGraph/Drawable.h>
@@ -27,7 +28,7 @@ namespace magnum_dynamics {
         {
             _shader
                 .setDiffuseColor(_color)
-                .setLightPosition(camera.cameraMatrix().transformPoint({-3.0f, 10.0f, 10.0f}))
+                .setLightPositions({{camera.cameraMatrix().transformPoint({-3.0f, 10.0f, 10.0f}), 0.0f}})
                 .setTransformationMatrix(transformationMatrix)
                 .setNormalMatrix(transformationMatrix.normalMatrix())
                 .setProjectionMatrix(camera.projectionMatrix())

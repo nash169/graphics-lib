@@ -1,40 +1,45 @@
-#ifndef MAGNUMDYNAMICS_TEXTUREDDRAWABLE_HPP
-#define MAGNUMDYNAMICS_TEXTUREDDRAWABLE_HPP
+#ifndef MAGNUM_DYNAMICS_DRAWABLE_OBJECT_HPP
+#define MAGNUM_DYNAMICS_DRAWABLE_OBJECT_HPP
 
+#include <Magnum/Math/Color.h>
+#include <Magnum/PixelFormat.h>
 #include <Magnum/SceneGraph/Camera.h>
 #include <Magnum/SceneGraph/Drawable.h>
 #include <Magnum/SceneGraph/MatrixTransformation3D.h>
 #include <Magnum/Shaders/Phong.h>
+#include <Magnum/Trade/PhongMaterialData.h>
 
 namespace magnum_dynamics {
     using namespace Magnum;
+    using namespace Math::Literals;
 
     typedef SceneGraph::Object<SceneGraph::MatrixTransformation3D> Object3D;
 
-    class TexturedDrawable : public SceneGraph::Drawable3D {
+    class DrawableObject : public SceneGraph::Drawable3D {
     public:
-        explicit TexturedDrawable(Object3D& object, SceneGraph::DrawableGroup3D& group, Shaders::Phong& shader, GL::Mesh& mesh, GL::Texture2D& texture) : SceneGraph::Drawable3D{object, &group}, _shader(shader)
+        explicit DrawableObject(Object3D& object, SceneGraph::DrawableGroup3D& group, Shaders::Phong& shader, GL::Mesh& mesh, const Color4& color = 0xffffff_rgbf)
+            : SceneGraph::Drawable3D{object, &group}, _shader(shader)
         {
             _mesh = std::move(mesh);
-            _texture = std::move(texture);
+            _color = std::move(color);
         }
 
     private:
         void draw(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera) override
         {
             _shader
+                .setDiffuseColor(_color)
                 .setLightPositions({{camera.cameraMatrix().transformPoint({-3.0f, 10.0f, 10.0f}), 0.0f}})
                 .setTransformationMatrix(transformationMatrix)
                 .setNormalMatrix(transformationMatrix.normalMatrix())
                 .setProjectionMatrix(camera.projectionMatrix())
-                .bindDiffuseTexture(_texture)
                 .draw(_mesh);
         }
 
         Shaders::Phong& _shader;
         GL::Mesh _mesh;
-        GL::Texture2D _texture;
+        Color4 _color;
     };
 } // namespace magnum_dynamics
 
-#endif // MAGNUMDYNAMICS_TEXTUREDDRAWABLE_HPP
+#endif // MAGNUM_DYNAMICS_DRAWABLE_OBJECT_HPP

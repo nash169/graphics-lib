@@ -98,25 +98,24 @@ namespace magnum_dynamics {
         }
 
         // Import primitives
-        void addPrimitive(const Trade::MeshData3D& primitive, const Matrix4& transformation, Color4 color)
+        void addPrimitive(const Trade::MeshData& primitive, const Matrix4& transformation, Color4 color)
         {
             GL::Buffer vertices;
-            vertices.setData(MeshTools::interleave(primitive.positions(0), primitive.normals(0)));
+            vertices.setData(MeshTools::interleave(primitive.positions3DAsArray(),
+                primitive.normalsAsArray()));
 
-            Containers::Array<char> indexData;
-            MeshIndexType indexType;
-            UnsignedInt indexStart, indexEnd;
-            std::tie(indexData, indexType, indexStart, indexEnd) = MeshTools::compressIndices(primitive.indices());
+            std::pair<Containers::Array<char>, MeshIndexType> compressed = MeshTools::compressIndices(primitive.indicesAsArray());
             GL::Buffer indices;
-            indices.setData(indexData);
+            indices.setData(compressed.first);
 
             GL::Mesh mesh;
 
             mesh
                 .setPrimitive(primitive.primitive())
-                .setCount(primitive.indices().size())
-                .addVertexBuffer(std::move(vertices), 0, Shaders::Phong::Position{}, Shaders::Phong::Normal{})
-                .setIndexBuffer(std::move(indices), 0, indexType, indexStart, indexEnd);
+                .setCount(primitive.indexCount())
+                .addVertexBuffer(std::move(vertices), 0, Shaders::Phong::Position{},
+                    Shaders::Phong::Normal{})
+                .setIndexBuffer(std::move(indices), 0, compressed.second);
 
             auto* object = new Object3D{&_manipulator};
             object->setTransformation(transformation);
@@ -187,8 +186,8 @@ namespace magnum_dynamics {
             for (UnsignedInt i = 0; i != importer->materialCount(); ++i) {
                 Debug{} << "Importing material" << i << importer->materialName(i);
 
-                Containers::Pointer<Trade::AbstractMaterialData> materialData = importer->material(i);
-                if (!materialData || materialData->type() != Trade::MaterialType::Phong) {
+                Containers::Optional<Trade::MaterialData> materialData = importer->material(i);
+                if (!materialData || materialData->types() != Trade::MaterialType::Phong) {
                     Warning{} << "Cannot load material, skipping";
                     continue;
                 }
@@ -199,11 +198,11 @@ namespace magnum_dynamics {
             /* MESHES */
             Containers::Array<Containers::Optional<GL::Mesh>> meshes{importer->meshCount()};
 
-            for (UnsignedInt i = 0; i != importer->mesh3DCount(); ++i) {
-                Debug{} << "Importing mesh" << i << importer->mesh3DName(i);
+            for (UnsignedInt i = 0; i != importer->meshCount(); ++i) {
+                Debug{} << "Importing mesh" << i << importer->meshName(i);
 
-                Containers::Optional<Trade::MeshData3D> meshData = importer->mesh3D(i);
-                if (!meshData || !meshData->hasNormals() || meshData->primitive() != MeshPrimitive::Triangles) {
+                Containers::Optional<Trade::MeshData> meshData = importer->mesh(i);
+                if (!meshData || !meshData->hasAttribute(Trade::MeshAttribute::Normal) || meshData->primitive() != MeshPrimitive::Triangles) {
                     Warning{} << "Cannot load the mesh, skipping";
                     continue;
                 }
@@ -276,7 +275,7 @@ namespace magnum_dynamics {
                 if (materialId == -1 || !materials[materialId])
                     new ColoredDrawable{*object, _drawables, _coloredShader, *meshes[objectData->instance()]};
                 /* Textured material. If the texture failed to load, again just use adefault colored material. */
-                else if (materials[materialId]->flags() & Trade::PhongMaterialData::Flag::DiffuseTexture) {
+                else if (materials[materialId]->hasAttribute(Trade::MaterialAttribute::DiffuseTexture)) {
                     Containers::Optional<GL::Texture2D>& texture = textures[materials[materialId]->diffuseTexture()];
                     if (texture)
                         new TexturedDrawable{*object, _drawables, _coloredShader, *meshes[objectData->instance()], *texture};

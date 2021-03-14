@@ -10,7 +10,7 @@ int main(int argc, char** argv)
     Eigen::Vector3f a{1.0f, 2.0f, 3.0f};
     Vector3 b(a);
 
-    const Trade::MeshData3D cube = Primitives::cubeSolid();
+    const Trade::MeshData cube = Primitives::cubeSolid();
     app.addPrimitive(cube, Matrix4::translation(Vector3::xAxis(-7.0f)) * Matrix4::translation(Vector3::zAxis(3.0f)), 0xff0000_rgbf);
     app.addPrimitive(cube, Matrix4::translation(Vector3::xAxis(7.0f)) * Matrix4::translation(Vector3::zAxis(3.0f)), 0x00ff00_rgbf);
     app.importScene("rsc/drone/drone.stl");
