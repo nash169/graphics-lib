@@ -67,7 +67,19 @@ namespace magnum_dynamics {
     public:
         explicit MagnumApp(const Arguments& arguments) : Platform::Application{arguments, Configuration{}.setTitle("Magnum Viewer Example").setWindowFlags(Configuration::WindowFlag::Resizable)}
         {
-            // Create the camera object for the scene
+            /* Try 8x MSAA, fall back to zero samples if not possible. Enable only 2x MSAA if we have enough DPI. */
+            {
+                const Vector2 dpiScaling = this->dpiScaling({});
+                Configuration conf;
+                conf.setTitle("Magnum Bullet Integration Example")
+                    .setSize(conf.size(), dpiScaling);
+                GLConfiguration glConf;
+                glConf.setSampleCount(dpiScaling.max() < 2.0f ? 8 : 2);
+                if (!tryCreate(conf, glConf))
+                    create(conf, glConf.setSampleCount(0));
+            }
+
+            /* Create the camera object for the scene */
             _cameraObject
                 .setParent(&_scene)
                 .translate(Vector3::zAxis(30.0f));
@@ -76,12 +88,14 @@ namespace magnum_dynamics {
                 .setProjectionMatrix(Matrix4::perspectiveProjection(35.0_degf, 1.0f, 0.01f, 1000.0f))
                 .setViewport(GL::defaultFramebuffer.viewport().size());
 
-            // Basic object parent of all the others
+            /* Basic object parent of all the others */
             _manipulator.setParent(&_scene);
 
-            // Recall something from OpenGL study but don't precisely
+            /* Recall something from OpenGL study but don't precisely */
             GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
             GL::Renderer::enable(GL::Renderer::Feature::FaceCulling);
+            // GL::Renderer::enable(GL::Renderer::Feature::PolygonOffsetFill);
+            // GL::Renderer::setPolygonOffset(2.0f, 0.5f);
 
             // Set colored shader
             _coloredShader
