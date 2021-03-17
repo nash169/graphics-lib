@@ -13,7 +13,8 @@ namespace magnum_dynamics {
 
     class TexturedDrawable : public SceneGraph::Drawable3D {
     public:
-        explicit TexturedDrawable(Object3D& object, SceneGraph::DrawableGroup3D& group, Shaders::Phong& shader, GL::Mesh& mesh, GL::Texture2D& texture) : SceneGraph::Drawable3D{object, &group}, _shader(shader)
+        explicit TexturedDrawable(Object3D& object, SceneGraph::DrawableGroup3D& group, Shaders::Phong& shader, GL::Mesh& mesh, GL::Texture2D& texture)
+            : SceneGraph::Drawable3D{object, &group}, _shader(shader)
         {
             _mesh = std::move(mesh);
             _texture = std::move(texture);

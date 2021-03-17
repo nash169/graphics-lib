@@ -67,18 +67,6 @@ namespace magnum_dynamics {
     public:
         explicit MagnumApp(const Arguments& arguments) : Platform::Application{arguments, Configuration{}.setTitle("Magnum Viewer Example").setWindowFlags(Configuration::WindowFlag::Resizable)}
         {
-            /* Try 8x MSAA, fall back to zero samples if not possible. Enable only 2x MSAA if we have enough DPI. */
-            {
-                const Vector2 dpiScaling = this->dpiScaling({});
-                Configuration conf;
-                conf.setTitle("Magnum Bullet Integration Example")
-                    .setSize(conf.size(), dpiScaling);
-                GLConfiguration glConf;
-                glConf.setSampleCount(dpiScaling.max() < 2.0f ? 8 : 2);
-                if (!tryCreate(conf, glConf))
-                    create(conf, glConf.setSampleCount(0));
-            }
-
             /* Create the camera object for the scene */
             _cameraObject
                 .setParent(&_scene)
