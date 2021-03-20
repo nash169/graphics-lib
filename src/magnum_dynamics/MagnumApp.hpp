@@ -65,7 +65,8 @@ namespace magnum_dynamics {
 
     class MagnumApp : public Platform::Application {
     public:
-        explicit MagnumApp(const Arguments& arguments) : Platform::Application{arguments, Configuration{}.setTitle("Magnum Viewer Example").setWindowFlags(Configuration::WindowFlag::Resizable)}
+        explicit MagnumApp(const Arguments& arguments)
+            : Platform::Application{arguments, Configuration{}.setTitle("Magnum Dynamics").setWindowFlags(Configuration::WindowFlag::Resizable)}
         {
             /* Create the camera object for the scene */
             _cameraObject
@@ -138,6 +139,11 @@ namespace magnum_dynamics {
             else {
                 import(path);
             }
+        }
+
+        std::vector<Object3D*> getObjects()
+        {
+            return _objects;
         }
 
     protected:
