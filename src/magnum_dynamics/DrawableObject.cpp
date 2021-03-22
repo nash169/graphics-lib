@@ -28,13 +28,15 @@ namespace magnum_dynamics {
 
     void DrawableObject::draw(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera)
     {
+        Matrix4 transformation = transformationMatrix * _primitiveTransformation;
+
         if (!_texture) {
             (*_colorShader)
                 .setDiffuseColor(_color)
                 // .setLightPositions({{camera.cameraMatrix().transformPoint({0.0f, 2.0f, 3.0f}), 0.0f},
                 //     {camera.cameraMatrix().transformPoint({0.0f, -2.0f, 3.0f}), 0.0f}})
-                .setTransformationMatrix(transformationMatrix)
-                .setNormalMatrix(transformationMatrix.normalMatrix())
+                .setTransformationMatrix(transformation)
+                .setNormalMatrix(transformation.normalMatrix())
                 .setProjectionMatrix(camera.projectionMatrix())
                 .draw(_mesh);
         }
@@ -42,8 +44,8 @@ namespace magnum_dynamics {
             (*_textureShader)
                 // .setLightPositions({{camera.cameraMatrix().transformPoint({0.0f, 2.0f, 3.0f}), 0.0f},
                 //     {camera.cameraMatrix().transformPoint({0.0f, -2.0f, 3.0f}), 0.0f}})
-                .setTransformationMatrix(transformationMatrix)
-                .setNormalMatrix(transformationMatrix.normalMatrix())
+                .setTransformationMatrix(transformation)
+                .setNormalMatrix(transformation.normalMatrix())
                 .setProjectionMatrix(camera.projectionMatrix())
                 .bindDiffuseTexture(*_texture)
                 .draw(_mesh);

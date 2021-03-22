@@ -121,7 +121,7 @@ namespace magnum_dynamics {
             std::exit(1);
 
         // Import file
-        Debug{} << "Opening file" << file;
+        // Debug{} << "Opening file" << file;
         if (!_importer->openFile(file))
             std::exit(4);
 
@@ -130,7 +130,7 @@ namespace magnum_dynamics {
 
         for (UnsignedInt i = 0; i != _importer->textureCount(); ++i) {
             // Import texture
-            Debug{} << "Importing texture" << i << _importer->textureName(i);
+            // Debug{} << "Importing texture" << i << _importer->textureName(i);
             Containers::Optional<Trade::TextureData> textureData = _importer->texture(i);
             if (!textureData || textureData->type() != Trade::TextureData::Type::Texture2D) {
                 Warning{} << "Cannot load texture properties, skipping";
@@ -138,7 +138,7 @@ namespace magnum_dynamics {
             }
 
             // Import image
-            Debug{} << "Importing image" << textureData->image() << _importer->image2DName(textureData->image());
+            // Debug{} << "Importing image" << textureData->image() << _importer->image2DName(textureData->image());
             Containers::Optional<Trade::ImageData2D> imageData = _importer->image2D(textureData->image());
             GL::TextureFormat format;
             if (imageData && imageData->format() == PixelFormat::RGB8Unorm)
@@ -167,7 +167,7 @@ namespace magnum_dynamics {
         Containers::Array<Containers::Optional<Trade::PhongMaterialData>> materials{_importer->materialCount()};
 
         for (UnsignedInt i = 0; i != _importer->materialCount(); ++i) {
-            Debug{} << "Importing material" << i << _importer->materialName(i);
+            // Debug{} << "Importing material" << i << _importer->materialName(i);
 
             Containers::Optional<Trade::MaterialData> materialData = _importer->material(i);
             if (!materialData || materialData->types() != Trade::MaterialType::Phong) {
@@ -182,7 +182,7 @@ namespace magnum_dynamics {
         Containers::Array<Containers::Optional<GL::Mesh>> meshes{_importer->meshCount()};
 
         for (UnsignedInt i = 0; i != _importer->meshCount(); ++i) {
-            Debug{} << "Importing mesh" << i << _importer->meshName(i);
+            // Debug{} << "Importing mesh" << i << _importer->meshName(i);
 
             Containers::Optional<Trade::MeshData> meshData = _importer->mesh(i);
             if (!meshData || !meshData->hasAttribute(Trade::MeshAttribute::Normal) || meshData->primitive() != MeshPrimitive::Triangles) {
@@ -196,7 +196,7 @@ namespace magnum_dynamics {
 
         /* Load the scene */
         if (_importer->defaultScene() != -1) {
-            Debug{} << "Adding default scene" << _importer->sceneName(_importer->defaultScene());
+            // Debug{} << "Adding default scene" << _importer->sceneName(_importer->defaultScene());
 
             Containers::Optional<Trade::SceneData> sceneData = _importer->scene(_importer->defaultScene());
             if (!sceneData) {
@@ -268,7 +268,7 @@ namespace magnum_dynamics {
         Object3D& parent, UnsignedInt i)
     {
         // Import the object information
-        Debug{} << "Importing object" << i << _importer->object3DName(i);
+        // Debug{} << "Importing object" << i << _importer->object3DName(i);
         Containers::Pointer<Trade::ObjectData3D> objectData = _importer->object3D(i);
         if (!objectData) {
             Error{} << "Cannot import object, skipping";
