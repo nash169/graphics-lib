@@ -56,9 +56,7 @@
 /* Magnum Integration */
 #include <Magnum/EigenIntegration/Integration.h>
 
-#include "magnum_dynamics/ColoredDrawable.hpp"
 #include "magnum_dynamics/DrawableObject.hpp"
-#include "magnum_dynamics/TexturedDrawable.hpp"
 
 namespace magnum_dynamics {
     using namespace Magnum;
