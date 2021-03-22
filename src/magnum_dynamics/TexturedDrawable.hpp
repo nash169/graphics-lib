@@ -24,7 +24,7 @@ namespace magnum_dynamics {
         void draw(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera) override
         {
             _shader
-                .setLightPositions({{camera.cameraMatrix().transformPoint({-3.0f, 10.0f, 10.0f}), 0.0f}})
+                // .setLightPositions({{camera.cameraMatrix().transformPoint({-3.0f, 10.0f, 10.0f}), 0.0f}})
                 .setTransformationMatrix(transformationMatrix)
                 .setNormalMatrix(transformationMatrix.normalMatrix())
                 .setProjectionMatrix(camera.projectionMatrix())

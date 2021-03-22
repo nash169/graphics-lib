@@ -29,7 +29,7 @@ namespace magnum_dynamics {
         {
             _shader
                 .setDiffuseColor(_color)
-                .setLightPositions({{camera.cameraMatrix().transformPoint({-3.0f, 10.0f, 10.0f}), 0.0f}})
+                // .setLightPositions({{camera.cameraMatrix().transformPoint({-1.0f, 1.0f, -1.0f}), 0.0f}})
                 .setTransformationMatrix(transformationMatrix)
                 .setNormalMatrix(transformationMatrix.normalMatrix())
                 .setProjectionMatrix(camera.projectionMatrix())

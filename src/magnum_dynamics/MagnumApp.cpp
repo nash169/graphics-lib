@@ -25,11 +25,10 @@ namespace magnum_dynamics {
             return;
 
         /* Distance to origin */
-        const Float distance = _cameraObject.transformation().translation().z();
+        const Float distance = (*_cameraObject).transformation().translation().z();
 
         /* Move 15% of the distance back or forward */
-        _cameraObject.translate(Vector3::zAxis(
-            distance * (1.0f - (event.offset().y() > 0 ? 1 / 0.85f : 0.85f))));
+        (*_cameraObject).translate(Vector3::zAxis(distance * (1.0f - (event.offset().y() > 0 ? 1 / 0.85f : 0.85f))));
 
         redraw();
     }
