@@ -1,4 +1,5 @@
 #include <iostream>
+
 #include <magnum_dynamics/MagnumApp.hpp>
 
 using namespace magnum_dynamics;
@@ -6,6 +7,8 @@ using namespace magnum_dynamics;
 int main(int argc, char** argv)
 {
     MagnumApp app({argc, argv});
+
+    // BulletPhysics app({argc, argv});
 
     Eigen::Vector3f a{1.0f, 2.0f, 3.0f};
     Vector3 b(a);
