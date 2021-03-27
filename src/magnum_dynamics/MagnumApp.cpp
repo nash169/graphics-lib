@@ -16,17 +16,21 @@ namespace magnum_dynamics {
                 create(conf, glConf.setSampleCount(0));
         }
 
-        /* Create the camera object for the scene */
-        (*(_cameraRig = new Object3D{&_scene}))
-            .translate(Vector3::yAxis(3.0f))
-            .rotateY(40.0_degf);
-        (*(_cameraObject = new Object3D{_cameraRig}))
-            .translate(Vector3::zAxis(20.0f))
-            .rotateX(-25.0_degf);
-        (*(_camera = new SceneGraph::Camera3D{*_cameraObject}))
-            .setAspectRatioPolicy(SceneGraph::AspectRatioPolicy::Extend)
-            .setProjectionMatrix(Matrix4::perspectiveProjection(35.0_degf, 1.0f, 0.001f, 100.0f))
-            .setViewport(GL::defaultFramebuffer.viewport().size());
+        Vector3 center{0., 0., 0.};
+        Vector3 camera{0., 6., 5.};
+        Vector3 front = (center - camera).normalized();
+        Vector3 up = Vector3::zAxis();
+        Vector3 right = Math::cross(front, up).normalized();
+
+        _camera.reset(new Camera(_scene));
+
+        // /* Create the camera object for the scene */
+        // (*(_cameraObject = new Object3D{&_scene}))
+        //     .setTransformation(Matrix4::lookAt(camera, center, up));
+        // (*(_camera = new SceneGraph::Camera3D{*_cameraObject}))
+        //     .setAspectRatioPolicy(SceneGraph::AspectRatioPolicy::Extend)
+        //     .setProjectionMatrix(Matrix4::perspectiveProjection(35.0_degf, 1.0f, 0.001f, 100.0f))
+        //     .setViewport(GL::defaultFramebuffer.viewport().size());
 
         /* Basic object parent of all the others */
         _manipulator.setParent(&_scene);
@@ -121,7 +125,7 @@ namespace magnum_dynamics {
             std::exit(1);
 
         // Import file
-        // Debug{} << "Opening file" << file;
+        Debug{} << "Opening file" << file;
         if (!_importer->openFile(file))
             std::exit(4);
 
@@ -130,7 +134,7 @@ namespace magnum_dynamics {
 
         for (UnsignedInt i = 0; i != _importer->textureCount(); ++i) {
             // Import texture
-            // Debug{} << "Importing texture" << i << _importer->textureName(i);
+            Debug{} << "Importing texture" << i << _importer->textureName(i);
             Containers::Optional<Trade::TextureData> textureData = _importer->texture(i);
             if (!textureData || textureData->type() != Trade::TextureData::Type::Texture2D) {
                 Warning{} << "Cannot load texture properties, skipping";
@@ -138,7 +142,7 @@ namespace magnum_dynamics {
             }
 
             // Import image
-            // Debug{} << "Importing image" << textureData->image() << _importer->image2DName(textureData->image());
+            Debug{} << "Importing image" << textureData->image() << _importer->image2DName(textureData->image());
             Containers::Optional<Trade::ImageData2D> imageData = _importer->image2D(textureData->image());
             GL::TextureFormat format;
             if (imageData && imageData->format() == PixelFormat::RGB8Unorm)
@@ -167,7 +171,7 @@ namespace magnum_dynamics {
         Containers::Array<Containers::Optional<Trade::PhongMaterialData>> materials{_importer->materialCount()};
 
         for (UnsignedInt i = 0; i != _importer->materialCount(); ++i) {
-            // Debug{} << "Importing material" << i << _importer->materialName(i);
+            Debug{} << "Importing material" << i << _importer->materialName(i);
 
             Containers::Optional<Trade::MaterialData> materialData = _importer->material(i);
             if (!materialData || materialData->types() != Trade::MaterialType::Phong) {
@@ -182,7 +186,7 @@ namespace magnum_dynamics {
         Containers::Array<Containers::Optional<GL::Mesh>> meshes{_importer->meshCount()};
 
         for (UnsignedInt i = 0; i != _importer->meshCount(); ++i) {
-            // Debug{} << "Importing mesh" << i << _importer->meshName(i);
+            Debug{} << "Importing mesh" << i << _importer->meshName(i);
 
             Containers::Optional<Trade::MeshData> meshData = _importer->mesh(i);
             if (!meshData || !meshData->hasAttribute(Trade::MeshAttribute::Normal) || meshData->primitive() != MeshPrimitive::Triangles) {
@@ -196,7 +200,7 @@ namespace magnum_dynamics {
 
         /* Load the scene */
         if (_importer->defaultScene() != -1) {
-            // Debug{} << "Adding default scene" << _importer->sceneName(_importer->defaultScene());
+            Debug{} << "Adding default scene" << _importer->sceneName(_importer->defaultScene());
 
             Containers::Optional<Trade::SceneData> sceneData = _importer->scene(_importer->defaultScene());
             if (!sceneData) {
@@ -206,7 +210,7 @@ namespace magnum_dynamics {
 
             /* Recursively add all children */
             for (UnsignedInt objectId : sceneData->children3D())
-                addObject(meshes, textures, materials, _manipulator, objectId);
+                addObject(meshes, textures, materials, transformation, primitive, _manipulator, objectId);
         }
         else if (!meshes.empty() && meshes[0]) {
             // Create 3D object
@@ -265,6 +269,8 @@ namespace magnum_dynamics {
     void MagnumApp::addObject(Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
         Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
         Containers::ArrayView<const Containers::Optional<Trade::PhongMaterialData>> materials,
+        const Matrix4& transformation,
+        const Matrix4& primitive,
         Object3D& parent, UnsignedInt i)
     {
         // Import the object information
@@ -279,7 +285,8 @@ namespace magnum_dynamics {
         auto* object = new Object3D{&parent};
 
         // Set object transformation
-        object->setTransformation(objectData->transformation());
+        // object->setTransformation(transformation);
+        object->setTransformation(transformation * objectData->transformation());
 
         /* Add a drawable if the object has a mesh and the mesh is loaded */
         if (objectData->instanceType() == Trade::ObjectInstanceType3D::Mesh && objectData->instance() != -1 && meshes[objectData->instance()]) {
@@ -288,7 +295,9 @@ namespace magnum_dynamics {
             /* Material not available / not loaded, use a default material */
             if (materialId == -1 || !materials[materialId]) {
                 auto drawableObj = new DrawableObject{*object, _drawables, _resourceManager};
-                drawableObj->setMesh(*meshes[objectData->instance()]);
+                drawableObj
+                    ->setMesh(*meshes[objectData->instance()])
+                    .setPrimitiveTransformation(primitive);
             }
             /* Textured material. If the texture failed to load, again just use adefault colored material. */
             else if (materials[materialId]->hasAttribute(Trade::MaterialAttribute::DiffuseTexture)) {
@@ -296,16 +305,23 @@ namespace magnum_dynamics {
 
                 auto drawableObj = new DrawableObject{*object, _drawables, _resourceManager};
 
-                drawableObj->setMesh(*meshes[objectData->instance()]);
+                drawableObj
+                    ->setMesh(*meshes[objectData->instance()])
+                    .setPrimitiveTransformation(primitive);
 
                 if (texture)
-                    drawableObj->setTexture(*texture);
+                    drawableObj
+                        ->setTexture(*texture)
+                        .setPrimitiveTransformation(primitive);
             }
             /* Color-only material */
             else {
                 auto drawableObj = new DrawableObject{*object, _drawables, _resourceManager};
 
-                drawableObj->setMesh(*meshes[objectData->instance()]).setColor(materials[materialId]->diffuseColor());
+                drawableObj
+                    ->setMesh(*meshes[objectData->instance()])
+                    .setColor(materials[materialId]->diffuseColor())
+                    .setPrimitiveTransformation(primitive);
             }
         }
 
@@ -313,14 +329,14 @@ namespace magnum_dynamics {
 
         /* Recursively add children */
         for (std::size_t id : objectData->children())
-            addObject(meshes, textures, materials, *object, id);
+            addObject(meshes, textures, materials, transformation, primitive, *object, id);
     }
 
     void MagnumApp::drawEvent()
     {
         GL::defaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
 
-        _camera->draw(_drawables);
+        _camera->camera()->draw(_drawables);
 
         swapBuffers();
 
@@ -330,7 +346,7 @@ namespace magnum_dynamics {
     void MagnumApp::viewportEvent(ViewportEvent& event)
     {
         GL::defaultFramebuffer.setViewport({{}, event.framebufferSize()});
-        _camera->setViewport(event.windowSize());
+        _camera->camera()->setViewport(event.windowSize());
     }
 
     void MagnumApp::mousePressEvent(MouseEvent& event)
@@ -351,10 +367,10 @@ namespace magnum_dynamics {
             return;
 
         /* Distance to origin */
-        const Float distance = (*_cameraObject).transformation().translation().z();
+        const Vector3 distance = (*_camera->object()).transformation().translation();
 
         /* Move 15% of the distance back or forward */
-        (*_cameraObject).translate(Vector3::zAxis(distance * (1.0f - (event.offset().y() > 0 ? 1 / 0.85f : 0.85f))));
+        (*_camera->object()).translate(distance * (1.0f - (event.offset().y() > 0 ? 1 / 0.85f : 0.85f)));
 
         redraw();
     }
@@ -378,7 +394,7 @@ namespace magnum_dynamics {
 
     Vector3 MagnumApp::positionOnSphere(const Vector2i& position) const
     {
-        const Vector2 positionNormalized = Vector2{position} / Vector2{_camera->viewport()} - Vector2{0.5f};
+        const Vector2 positionNormalized = Vector2{position} / Vector2{_camera->camera()->viewport()} - Vector2{0.5f};
         const Float length = positionNormalized.length();
         const Vector3 result(length > 1.0f ? Vector3(positionNormalized, 0.0f) : Vector3(positionNormalized, 1.0f - length));
         return (result * Vector3::yScale(-1.0f)).normalized();

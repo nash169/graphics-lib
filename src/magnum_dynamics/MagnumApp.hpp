@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-#include <Eigen/Core>
+// #include <Eigen/Core>
 
 // Corrade
 #include <Corrade/Containers/Array.h>
@@ -54,8 +54,9 @@
 #include <Magnum/Trade/TextureData.h>
 
 /* Magnum Integration */
-#include <Magnum/EigenIntegration/Integration.h>
+// #include <Magnum/EigenIntegration/Integration.h>
 
+#include "magnum_dynamics/Camera.hpp"
 #include "magnum_dynamics/DrawableObject.hpp"
 
 namespace magnum_dynamics {
@@ -64,7 +65,7 @@ namespace magnum_dynamics {
 
     typedef ResourceManager<GL::Buffer, GL::Mesh, Shaders::Phong> ViewerResourceManager;
     typedef SceneGraph::Scene<SceneGraph::MatrixTransformation3D> Scene3D;
-    typedef SceneGraph::Object<SceneGraph::MatrixTransformation3D> Object3D;
+    // typedef SceneGraph::Object<SceneGraph::MatrixTransformation3D> Object3D;
 
     class MagnumApp : public Platform::Application {
     public:
@@ -94,6 +95,8 @@ namespace magnum_dynamics {
         void addObject(Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
             Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
             Containers::ArrayView<const Containers::Optional<Trade::PhongMaterialData>> materials,
+            const Matrix4& transformation,
+            const Matrix4& primitive,
             Object3D& parent, UnsignedInt i);
 
         // Draw
@@ -113,13 +116,15 @@ namespace magnum_dynamics {
 
         std::vector<Object3D*> _objects;
 
-        SceneGraph::Camera3D* _camera;
+        // SceneGraph::Camera3D* _camera;
         SceneGraph::DrawableGroup3D _drawables;
 
         Vector3 _previousPosition;
 
         PluginManager::Manager<Trade::AbstractImporter> _manager;
         Containers::Pointer<Trade::AbstractImporter> _importer;
+
+        std::unique_ptr<Camera> _camera;
     };
 } // namespace magnum_dynamics
 
