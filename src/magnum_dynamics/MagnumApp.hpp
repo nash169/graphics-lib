@@ -77,6 +77,11 @@ namespace magnum_dynamics {
         // Get 3D objects
         std::vector<Object3D*> getObjects();
 
+        int getNumObjects()
+        {
+            return _objects.size();
+        }
+
         // Import scene
         void add(const std::string& path,
             const std::string& extension = "",
