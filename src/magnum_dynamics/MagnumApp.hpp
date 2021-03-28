@@ -2,6 +2,7 @@
 #define MAGNUMDYNAMICS_MAGNUMAPP_HPP
 
 #include <iostream>
+#include <memory>
 
 // #include <Eigen/Core>
 
