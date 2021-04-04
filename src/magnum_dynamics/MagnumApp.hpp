@@ -2,6 +2,7 @@
 #define MAGNUMDYNAMICS_MAGNUMAPP_HPP
 
 #include <iostream>
+#include <map>
 #include <memory>
 
 // #include <Eigen/Core>
@@ -59,6 +60,7 @@
 
 #include "magnum_dynamics/Camera.hpp"
 #include "magnum_dynamics/DrawableObject.hpp"
+#include "magnum_dynamics/Object.hpp"
 
 namespace magnum_dynamics {
     using namespace Magnum;
@@ -75,13 +77,11 @@ namespace magnum_dynamics {
         // Set importer
         MagnumApp& setImporter(const std::string& importer);
 
-        // Get 3D objects
-        std::vector<Object3D*> getObjects();
+        // Get Object
+        Object3D& manipulator();
 
-        int getNumObjects()
-        {
-            return _objects.size();
-        }
+        // Get number objects
+        size_t numObjects() const;
 
         // Import scene
         void add(const std::string& path,
@@ -100,7 +100,7 @@ namespace magnum_dynamics {
         // Add Object
         void addObject(Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
             Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
-            Containers::ArrayView<const Containers::Optional<Trade::PhongMaterialData>> materials,
+            Containers::ArrayView<Containers::Optional<Trade::PhongMaterialData>> materials,
             const Matrix4& transformation,
             const Matrix4& primitive,
             Object3D& parent, UnsignedInt i);
@@ -108,29 +108,39 @@ namespace magnum_dynamics {
         // Draw
         void drawEvent() override;
 
+        // Handle multiple shaders
+        ViewerResourceManager _resourceManager;
+
+        // Scene
+        Scene3D _scene;
+
+        // Camera
+        Containers::Pointer<Camera> _camera;
+
+        // Parent object
+        Object3D _manipulator;
+
+        // Objects
+        std::unordered_map<Object3D*, Containers::Pointer<DrawableObject>> _drawableObjects;
+
+        // Drawables
+        SceneGraph::DrawableGroup3D _drawables;
+
+        // Manager (to set importer)
+        PluginManager::Manager<Trade::AbstractImporter> _manager;
+
+        // Importer
+        Containers::Pointer<Trade::AbstractImporter> _importer;
+
+        // Mouse interaction
+        Vector3 _previousPosition;
+
         void viewportEvent(ViewportEvent& event) override;
         void mousePressEvent(MouseEvent& event) override;
         void mouseReleaseEvent(MouseEvent& event) override;
         void mouseMoveEvent(MouseMoveEvent& event) override;
         void mouseScrollEvent(MouseScrollEvent& event) override;
         Vector3 positionOnSphere(const Vector2i& position) const;
-
-        ViewerResourceManager _resourceManager;
-
-        Scene3D _scene;
-        Object3D _manipulator, *_cameraObject, *_cameraRig;
-
-        std::vector<Object3D*> _objects;
-
-        // SceneGraph::Camera3D* _camera;
-        SceneGraph::DrawableGroup3D _drawables;
-
-        Vector3 _previousPosition;
-
-        PluginManager::Manager<Trade::AbstractImporter> _manager;
-        Containers::Pointer<Trade::AbstractImporter> _importer;
-
-        std::unique_ptr<Camera> _camera;
     };
 } // namespace magnum_dynamics
 

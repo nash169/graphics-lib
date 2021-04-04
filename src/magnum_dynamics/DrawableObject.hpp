@@ -30,24 +30,29 @@ namespace magnum_dynamics {
               _color(0xffffff_rgbf) {}
 
         DrawableObject& setMesh(GL::Mesh& mesh);
+
         DrawableObject& setTexture(GL::Texture2D& texture);
+
+        DrawableObject& setMaterial(Trade::PhongMaterialData& material);
+
         DrawableObject& setColor(const Color4& color);
+
         DrawableObject& setPrimitiveTransformation(const Matrix4& transformation);
 
     private:
         void draw(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera) override;
 
-        // Color Shader
-        Resource<Shaders::Phong> _colorShader;
-
-        // Texture Shader
-        Resource<Shaders::Phong> _textureShader;
+        // Shaders
+        Resource<Shaders::Phong> _colorShader, _textureShader, _vertexShader;
 
         // Mesh
         GL::Mesh _mesh;
 
         // Texture
         Containers::Optional<GL::Texture2D> _texture;
+
+        // Material
+        Containers::Optional<Trade::PhongMaterialData> _material;
 
         // Color
         Color4 _color;

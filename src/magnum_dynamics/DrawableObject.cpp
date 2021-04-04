@@ -13,6 +13,12 @@ namespace magnum_dynamics {
         return *this;
     }
 
+    DrawableObject& DrawableObject::setMaterial(Trade::PhongMaterialData& material)
+    {
+        _material = std::move(material);
+        return *this;
+    }
+
     DrawableObject& DrawableObject::setColor(const Color4& color)
     {
         _color = std::move(color);
@@ -31,8 +37,18 @@ namespace magnum_dynamics {
         Matrix4 transformation = transformationMatrix * _primitiveTransformation;
 
         if (!_texture) {
+            if (!_material)
+                (*_colorShader)
+                    .setDiffuseColor(_color);
+
+            else
+                (*_colorShader)
+                    .setAmbientColor(_material->ambientColor())
+                    .setDiffuseColor(_material->diffuseColor())
+                    .setSpecularColor(_material->specularColor())
+                    .setShininess(_material->shininess());
+
             (*_colorShader)
-                .setDiffuseColor(_color)
                 // .setLightPositions({{camera.cameraMatrix().transformPoint({0.0f, 2.0f, 3.0f}), 0.0f},
                 //     {camera.cameraMatrix().transformPoint({0.0f, -2.0f, 3.0f}), 0.0f}})
                 .setTransformationMatrix(transformation)
