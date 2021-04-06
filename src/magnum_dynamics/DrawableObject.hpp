@@ -1,6 +1,8 @@
 #ifndef MAGNUM_DYNAMICS_DRAWABLE_OBJECT_HPP
 #define MAGNUM_DYNAMICS_DRAWABLE_OBJECT_HPP
 
+#include <Corrade/Containers/Optional.h>
+
 #include <Magnum/GL/Mesh.h>
 #include <Magnum/GL/Texture.h>
 
