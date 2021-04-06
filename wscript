@@ -37,7 +37,7 @@ def configure(cfg):
 
     # Load tools configurations
     cfg.options.magnum_components = (
-        "Sdl2Application,Primitives,Shaders,MeshTools,SceneGraph,Trade,GL"
+        "Sdl2Application,Primitives,Shaders,MeshTools,SceneGraph,Trade,GL,DebugTools"
     )
     cfg.options.magnum_integrations = "Eigen"
     cfg.load("flags magnum", tooldir="waf_tools")
@@ -64,7 +64,7 @@ def build(bld):
     ):
         for filename in fnmatch.filter(filenames, "*.hpp"):
             includes.append(os.path.join(root, filename))
-    includes = [f[len(bld.path.abspath()) + 1 :] for f in includes]
+    includes = [f[len(bld.path.abspath()) + 1:] for f in includes]
 
     # Sources
     sources = []
@@ -74,7 +74,7 @@ def build(bld):
     ):
         for filename in fnmatch.filter(filenames, "*.cpp"):
             sources.append(os.path.join(root, filename))
-    sources = " ".join([f[len(bld.path.abspath()) + 1 :] for f in sources])
+    sources = " ".join([f[len(bld.path.abspath()) + 1:] for f in sources])
 
     # Build library
     if bld.options.shared:
