@@ -80,6 +80,8 @@ namespace magnum_dynamics {
         // Get Object
         Object3D& manipulator();
 
+        SceneGraph::DrawableGroup3D& drawables();
+
         // Get number objects
         size_t numObjects() const;
 
