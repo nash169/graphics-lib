@@ -11,6 +11,7 @@
 #include <Magnum/SceneGraph/Drawable.h>
 #include <Magnum/SceneGraph/MatrixTransformation3D.h>
 #include <Magnum/Shaders/Phong.h>
+#include <Magnum/Shaders/VertexColor.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 
 namespace magnum_dynamics {
@@ -18,16 +19,13 @@ namespace magnum_dynamics {
     using namespace Math::Literals;
 
     typedef SceneGraph::Object<SceneGraph::MatrixTransformation3D> Object3D;
-    typedef ResourceManager<GL::Buffer, GL::Mesh, Shaders::Phong> ViewerResourceManager;
 
     class DrawableObject : public SceneGraph::Drawable3D {
     public:
-        explicit DrawableObject(Object3D& object, SceneGraph::DrawableGroup3D& group, ViewerResourceManager& resourceManager)
+        explicit DrawableObject(Object3D& object, SceneGraph::DrawableGroup3D& group, ResourceManager<GL::AbstractShaderProgram>& shadersManager)
             : SceneGraph::Drawable3D{object, &group},
-              _colorShader{resourceManager.get<Shaders::Phong>("color")},
-              _textureShader{resourceManager.get<Shaders::Phong>("texture")},
-              _primitiveTransformation(Matrix4()),
-              _color(0xffffff_rgbf) {}
+              _shadersManager(shadersManager),
+              _primitiveTransformation(Matrix4()) {}
 
         DrawableObject& setMesh(GL::Mesh& mesh);
 
@@ -43,7 +41,7 @@ namespace magnum_dynamics {
         void draw(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera) override;
 
         // Shaders
-        Resource<Shaders::Phong> _colorShader, _textureShader, _vertexShader;
+        ResourceManager<GL::AbstractShaderProgram>& _shadersManager;
 
         // Mesh
         GL::Mesh _mesh;
@@ -55,7 +53,7 @@ namespace magnum_dynamics {
         Containers::Optional<Trade::PhongMaterialData> _material;
 
         // Color
-        Color4 _color;
+        Containers::Optional<Color4> _color;
 
         // Primitive transformation
         Matrix4 _primitiveTransformation;

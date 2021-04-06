@@ -31,23 +31,23 @@ namespace magnum_dynamics {
         // GL::Renderer::setPolygonOffset(2.0f, 0.5f);
 
         // Set colored shader
-        _resourceManager.set("color", new Shaders::Phong{{}, 2});
+        _shadersManager.set<GL::AbstractShaderProgram>("color", new Shaders::Phong{{}, 2});
 
-        _resourceManager.get<Shaders::Phong>("color")
+        _shadersManager.get<GL::AbstractShaderProgram, Shaders::Phong>("color")
             ->setAmbientColor(0x111111_rgbf)
             .setSpecularColor(0xffffff_rgbf)
             .setShininess(80.0f);
 
         // Set texture shader
-        _resourceManager.set("texture", new Shaders::Phong(Shaders::Phong::Flag::DiffuseTexture, 2));
+        _shadersManager.set<GL::AbstractShaderProgram>("texture", new Shaders::Phong(Shaders::Phong::Flag::DiffuseTexture, 2));
 
-        _resourceManager.get<Shaders::Phong>("texture")
+        _shadersManager.get<GL::AbstractShaderProgram, Shaders::Phong>("texture")
             ->setAmbientColor(0x111111_rgbf)
             .setSpecularColor(0x111111_rgbf)
             .setShininess(80.0f);
 
         // Set vertex shader
-        _resourceManager.set("vertex", new Shaders::Phong(Shaders::Phong::Flag::VertexColor));
+        _shadersManager.set<GL::AbstractShaderProgram>("vertex", new Shaders::VertexColor3D);
 
         // Default importer
         setImporter("AnySceneImporter");
@@ -218,7 +218,7 @@ namespace magnum_dynamics {
                 it.first->first->setTransformation(transformation);
 
                 // Create drawable
-                it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _resourceManager);
+                it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
 
                 // Set drawable properties
                 it.first->second->setMesh(*meshes[0]).setPrimitiveTransformation(primitive);
@@ -229,10 +229,12 @@ namespace magnum_dynamics {
     // Add primitive
     void MagnumApp::addPrimitive(const Trade::MeshData& mesh_data, const Matrix4& transformation, const Color4& color, const Matrix4& primitive)
     {
+        // Vertices
         GL::Buffer vertices;
         vertices.setData(MeshTools::interleave(mesh_data.positions3DAsArray(),
             mesh_data.normalsAsArray()));
 
+        // Indices
         std::pair<Containers::Array<char>, MeshIndexType> compressed = MeshTools::compressIndices(mesh_data.indicesAsArray());
         GL::Buffer indices;
         indices.setData(compressed.first);
@@ -255,7 +257,7 @@ namespace magnum_dynamics {
 
             // Create drawable
             // *(static_cast<Object3D*>(&(_objects.back()->object())))
-            it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _resourceManager);
+            it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
 
             // Set drawable properties
             it.first->second->setMesh(mesh).setColor(color).setPrimitiveTransformation(primitive);
@@ -284,13 +286,27 @@ namespace magnum_dynamics {
             // Set object transformation
             it.first->first->setTransformation(transformation * objectData->transformation());
 
+            // Just for debug add reference frame
+            {
+                auto axis_mesh = Primitives::axis3D();
+
+                GL::Mesh mesh = MeshTools::compile(axis_mesh);
+
+                auto* obj = new Object3D(&_manipulator);
+
+                obj->setTransformation(objectData->transformation());
+
+                auto* drwObj = new DrawableObject(*obj, _drawables, _shadersManager);
+                drwObj->setMesh(mesh).setPrimitiveTransformation(Matrix4::scaling({0.5f, 0.5f, 0.5f}));
+            }
+
             /* Add a drawable if the object has a mesh and the mesh is loaded */
             if (objectData->instanceType() == Trade::ObjectInstanceType3D::Mesh && objectData->instance() != -1 && meshes[objectData->instance()]) {
                 const Int materialId = static_cast<Trade::MeshObjectData3D*>(objectData.get())->material();
 
                 /* Material not available / not loaded, use a default material */
                 if (materialId == -1 || !materials[materialId]) {
-                    it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _resourceManager);
+                    it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
 
                     it.first->second
                         ->setMesh(*meshes[objectData->instance()])
@@ -300,7 +316,7 @@ namespace magnum_dynamics {
                 else if (materials[materialId]->hasAttribute(Trade::MaterialAttribute::DiffuseTexture)) {
                     Containers::Optional<GL::Texture2D>& texture = textures[materials[materialId]->diffuseTexture()];
 
-                    it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _resourceManager);
+                    it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
 
                     it.first->second
                         ->setMesh(*meshes[objectData->instance()])
@@ -313,7 +329,7 @@ namespace magnum_dynamics {
                 }
                 /* Color-only material */
                 else {
-                    it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _resourceManager);
+                    it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
 
                     it.first->second
                         ->setMesh(*meshes[objectData->instance()])

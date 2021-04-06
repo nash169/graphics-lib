@@ -34,6 +34,7 @@
 
 #include <Magnum/Platform/Sdl2Application.h>
 
+#include <Magnum/Primitives/Axis.h>
 #include <Magnum/Primitives/Cube.h>
 
 #include <Magnum/SceneGraph/Camera.h>
@@ -44,6 +45,7 @@
 #include <Magnum/SceneGraph/SceneGraph.h>
 
 #include <Magnum/Shaders/Phong.h>
+#include <Magnum/Shaders/VertexColor.h>
 
 #include <Magnum/ResourceManager.h>
 
@@ -66,9 +68,7 @@ namespace magnum_dynamics {
     using namespace Magnum;
     using namespace Math::Literals;
 
-    typedef ResourceManager<GL::Buffer, GL::Mesh, Shaders::Phong> ViewerResourceManager;
     typedef SceneGraph::Scene<SceneGraph::MatrixTransformation3D> Scene3D;
-    // typedef SceneGraph::Object<SceneGraph::MatrixTransformation3D> Object3D;
 
     class MagnumApp : public Platform::Application {
     public:
@@ -109,7 +109,7 @@ namespace magnum_dynamics {
         void drawEvent() override;
 
         // Handle multiple shaders
-        ViewerResourceManager _resourceManager;
+        ResourceManager<GL::AbstractShaderProgram> _shadersManager;
 
         // Scene
         Scene3D _scene;
