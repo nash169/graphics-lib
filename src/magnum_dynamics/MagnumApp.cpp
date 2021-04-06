@@ -2,7 +2,7 @@
 
 namespace magnum_dynamics {
     MagnumApp::MagnumApp(const Arguments& arguments)
-        : Platform::Application{arguments, Corrade::Containers::NoCreate}
+        : Platform::Application{arguments, NoCreate}
     {
         /* Try 8x MSAA, fall back to zero samples if not possible. Enable only 2x MSAA if we have enough DPI. */
         {
@@ -85,6 +85,11 @@ namespace magnum_dynamics {
     Object3D& MagnumApp::manipulator()
     {
         return _manipulator;
+    }
+
+    SceneGraph::DrawableGroup3D& MagnumApp::drawables()
+    {
+        return _drawables;
     }
 
     size_t MagnumApp::numObjects() const
