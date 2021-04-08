@@ -108,19 +108,19 @@ namespace magnum_dynamics {
             for (auto& file : Corrade::Utility::Directory::list(path)) {
                 auto pair = Corrade::Utility::Directory::splitExtension(file);
                 if (!extension.compare(pair.second)) {
-                    import(Corrade::Utility::Directory::join(path, file), transformation, primitive);
+                    import(Corrade::Utility::Directory::join(path, file), transformation, color, primitive);
                 }
             }
         }
         else if (!path.compare("cube"))
             addPrimitive(Primitives::cubeSolid(), transformation, color, primitive);
         else {
-            import(path, transformation, primitive);
+            import(path, transformation, color, primitive);
         }
     }
 
     // Add from file
-    void MagnumApp::import(const std::string& file, const Matrix4& transformation, const Matrix4& primitive)
+    void MagnumApp::import(const std::string& file, const Matrix4& transformation, const Color4& color, const Matrix4& primitive)
     {
         // Check importer
         if (!_importer)
@@ -212,8 +212,9 @@ namespace magnum_dynamics {
 
             /* Recursively add all children */
             for (UnsignedInt objectId : sceneData->children3D())
-                addObject(meshes, textures, materials, transformation, primitive, _manipulator, objectId);
+                addObject(meshes, textures, materials, color, transformation, primitive, _manipulator, objectId);
         }
+        /* The format has no scene support, display just the first loaded mesh with a default material and be done with it */
         else if (!meshes.empty() && meshes[0]) {
             // Create 3D object
             auto it = _drawableObjects.insert(std::make_pair(new Object3D(&_manipulator), nullptr));
@@ -226,7 +227,7 @@ namespace magnum_dynamics {
                 it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
 
                 // Set drawable properties
-                it.first->second->setMesh(*meshes[0]).setPrimitiveTransformation(primitive);
+                it.first->second->setMesh(*meshes[0]).setPrimitiveTransformation(primitive).setColor(color);
             }
         }
     }
@@ -269,9 +270,79 @@ namespace magnum_dynamics {
         }
     }
 
+    Object3D& MagnumApp::addTemp(Object3D& parent,
+        GL::Mesh mesh,
+        Containers::Optional<GL::Texture2D>& texture,
+        Containers::Optional<Trade::PhongMaterialData>& material,
+        const Color4& color,
+        const Matrix4& transformation,
+        const Matrix4& primitive)
+    {
+        // Create 3D object
+        auto it = _drawableObjects.insert(std::make_pair(new Object3D(&parent), nullptr));
+        if (it.second) {
+            // Set object transformation
+            it.first->first->setTransformation(transformation);
+
+            /* Material not available / not loaded, use a default material */
+            if (!material) {
+                it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
+
+                it.first->second
+                    ->setMesh(mesh)
+                    .setColor(color) // Default color
+                    .setPrimitiveTransformation(primitive);
+            }
+            /* Textured material. If the texture failed to load, again just use adefault colored material. */
+            else if (material->hasAttribute(Trade::MaterialAttribute::DiffuseTexture)) {
+                it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
+
+                it.first->second
+                    ->setMesh(mesh)
+                    .setPrimitiveTransformation(primitive);
+
+                if (texture)
+                    it.first->second
+                        ->setTexture(*texture);
+                else
+                    it.first->second
+                        ->setColor(color);
+            }
+            /* Not textured material */
+            else {
+                it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
+
+                it.first->second
+                    ->setMesh(mesh)
+                    .setMaterial(*material)
+                    .setColor(material->diffuseColor()) // set color by default but it should not be used
+                    .setPrimitiveTransformation(primitive);
+            }
+        }
+
+        return *it.first->first;
+    }
+
+    Object3D& MagnumApp::addFrame(const Matrix4& transformation, const Matrix4& scale)
+    {
+        auto axis_mesh = Primitives::axis3D();
+
+        GL::Mesh mesh = MeshTools::compile(axis_mesh);
+
+        auto* obj = new Object3D(&_manipulator);
+
+        obj->setTransformation(transformation);
+
+        auto* drwObj = new DrawableObject(*obj, _drawables, _shadersManager);
+        drwObj->setMesh(mesh).setPrimitiveTransformation(scale);
+
+        return *obj;
+    }
+
     void MagnumApp::addObject(Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
         Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
         Containers::ArrayView<Containers::Optional<Trade::PhongMaterialData>> materials,
+        const Color4& color,
         const Matrix4& transformation,
         const Matrix4& primitive,
         Object3D& parent, UnsignedInt i)
@@ -289,21 +360,21 @@ namespace magnum_dynamics {
 
         if (it.second) {
             // Set object transformation
-            it.first->first->setTransformation(transformation * objectData->transformation());
+            it.first->first->setTransformation(objectData->transformation());
 
-            // Just for debug add reference frame
-            {
-                auto axis_mesh = Primitives::axis3D();
+            // // Just for debug add reference frame
+            // {
+            //     auto axis_mesh = Primitives::axis3D();
 
-                GL::Mesh mesh = MeshTools::compile(axis_mesh);
+            //     GL::Mesh mesh = MeshTools::compile(axis_mesh);
 
-                auto* obj = new Object3D(&_manipulator);
+            //     auto* obj = new Object3D(&_manipulator);
 
-                obj->setTransformation(objectData->transformation());
+            //     obj->setTransformation(objectData->transformation());
 
-                auto* drwObj = new DrawableObject(*obj, _drawables, _shadersManager);
-                drwObj->setMesh(mesh).setPrimitiveTransformation(Matrix4::scaling({0.5f, 0.5f, 0.5f}));
-            }
+            //     auto* drwObj = new DrawableObject(*obj, _drawables, _shadersManager);
+            //     drwObj->setMesh(mesh).setPrimitiveTransformation(Matrix4::scaling({0.5f, 0.5f, 0.5f}));
+            // }
 
             /* Add a drawable if the object has a mesh and the mesh is loaded */
             if (objectData->instanceType() == Trade::ObjectInstanceType3D::Mesh && objectData->instance() != -1 && meshes[objectData->instance()]) {
@@ -315,6 +386,7 @@ namespace magnum_dynamics {
 
                     it.first->second
                         ->setMesh(*meshes[objectData->instance()])
+                        .setColor(color) // Default color
                         .setPrimitiveTransformation(primitive);
                 }
                 /* Textured material. If the texture failed to load, again just use adefault colored material. */
@@ -329,24 +401,26 @@ namespace magnum_dynamics {
 
                     if (texture)
                         it.first->second
-                            ->setTexture(*texture)
-                            .setPrimitiveTransformation(primitive);
+                            ->setTexture(*texture);
+                    else
+                        it.first->second
+                            ->setColor(color);
                 }
-                /* Color-only material */
+                /* Not textured material */
                 else {
                     it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
 
                     it.first->second
                         ->setMesh(*meshes[objectData->instance()])
                         .setMaterial(*materials[materialId])
-                        .setColor(materials[materialId]->diffuseColor())
+                        .setColor(materials[materialId]->diffuseColor()) // set color by default but it should not be used
                         .setPrimitiveTransformation(primitive);
                 }
             }
 
             /* Recursively add children */
             for (std::size_t id : objectData->children())
-                addObject(meshes, textures, materials, transformation, primitive, *it.first->first, id);
+                addObject(meshes, textures, materials, color, transformation, primitive, *it.first->first, id);
         }
     }
 

@@ -4,13 +4,14 @@ namespace magnum_dynamics {
     Camera::Camera(Object3D& object) : Object3D{&object}
     {
         Vector3 center{0., 0., 0.};
-        Vector3 camera{0., 20., 10.};
+        Vector3 camera{0., 10., 10.};
         _front = (center - camera).normalized();
         _up = Vector3::zAxis();
         _right = Math::cross(_front, _up).normalized();
 
         _cameraObject = new Object3D{this};
         _cameraObject->setTransformation(Matrix4::lookAt(camera, center, _up));
+        // _cameraObject->translate(Vector3::zAxis(5.0f));
 
         _fov = Magnum::Deg(60.0f);
         // _aspectRatio = width / static_cast<Float>(height);

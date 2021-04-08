@@ -74,6 +74,11 @@ namespace magnum_dynamics {
     public:
         explicit MagnumApp(const Arguments& arguments);
 
+        ~MagnumApp()
+        {
+            _drawableObjects.clear();
+        }
+
         // Set importer
         MagnumApp& setImporter(const std::string& importer);
 
@@ -92,9 +97,20 @@ namespace magnum_dynamics {
             const Color4& color = 0xffffff_rgbf,
             const Matrix4& primitive = Matrix4());
 
+        // Add 3D Object
+        Object3D& addTemp(Object3D& parent,
+            GL::Mesh mesh,
+            Containers::Optional<GL::Texture2D>& texture,
+            Containers::Optional<Trade::PhongMaterialData>& material,
+            const Color4& color = 0xffffff_rgbf,
+            const Matrix4& transformation = Matrix4(),
+            const Matrix4& primitive = Matrix4());
+
+        Object3D& addFrame(const Matrix4& transformation = Matrix4(), const Matrix4& scale = Matrix4());
+
     protected:
         // Add from file
-        void import(const std::string& file, const Matrix4& transformation, const Matrix4& primitive);
+        void import(const std::string& file, const Matrix4& transformation, const Color4& color, const Matrix4& primitive);
 
         // Add primitive
         void addPrimitive(const Trade::MeshData& mesh_data, const Matrix4& transformation, const Color4& color, const Matrix4& primitive);
@@ -103,6 +119,7 @@ namespace magnum_dynamics {
         void addObject(Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
             Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
             Containers::ArrayView<Containers::Optional<Trade::PhongMaterialData>> materials,
+            const Color4& color,
             const Matrix4& transformation,
             const Matrix4& primitive,
             Object3D& parent, UnsignedInt i);
