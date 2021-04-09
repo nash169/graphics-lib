@@ -57,12 +57,16 @@
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
 
+#include <Magnum/DebugTools/ColorMap.h>
+
 /* Magnum Integration */
-// #include <Magnum/EigenIntegration/Integration.h>
+#include <Magnum/EigenIntegration/Integration.h>
 
 #include "magnum_dynamics/Camera.hpp"
 #include "magnum_dynamics/DrawableObject.hpp"
 #include "magnum_dynamics/Object.hpp"
+
+// #include "magnum_dynamics/utils/math.hpp"
 
 namespace magnum_dynamics {
     using namespace Magnum;
@@ -83,45 +87,77 @@ namespace magnum_dynamics {
         MagnumApp& setImporter(const std::string& importer);
 
         // Get Object
-        Object3D& manipulator();
+        Object& manipulator();
 
         SceneGraph::DrawableGroup3D& drawables();
 
         // Get number objects
         size_t numObjects() const;
 
-        // Import scene
-        void add(const std::string& path,
-            const std::string& extension = "",
-            const Matrix4& transformation = Matrix4(),
-            const Color4& color = 0xffffff_rgbf,
-            const Matrix4& primitive = Matrix4());
-
-        // Add 3D Object
-        Object3D& addTemp(Object3D& parent,
-            GL::Mesh mesh,
-            Containers::Optional<GL::Texture2D>& texture,
-            Containers::Optional<Trade::PhongMaterialData>& material,
-            const Color4& color = 0xffffff_rgbf,
-            const Matrix4& transformation = Matrix4(),
-            const Matrix4& primitive = Matrix4());
-
-        Object3D& addFrame(const Matrix4& transformation = Matrix4(), const Matrix4& scale = Matrix4());
-
-    protected:
-        // Add from file
-        void import(const std::string& file, const Matrix4& transformation, const Color4& color, const Matrix4& primitive);
+        // Cartesian frame
+        Object3D& addFrame();
 
         // Add primitive
-        void addPrimitive(const Trade::MeshData& mesh_data, const Matrix4& transformation, const Color4& color, const Matrix4& primitive);
+        Object& addPrimitive(const std::string& primitive);
 
-        // Add Object
+        // Import from file (return object parent of all the objects inside the file)
+        Object& import(const std::string& file);
+
+        // To plot a surface basically but it can be more general
+        Object& plot(const std::string& file, const Eigen::VectorXd& x, const std::string& colormap)
+        {
+            // Check importer
+            if (!_importer)
+                std::exit(1);
+
+            // Import file
+            Debug{} << "Opening file" << file;
+            if (!_importer->openFile(file))
+                std::exit(4);
+
+            Containers::Array<Containers::Optional<GL::Mesh>> meshes{_importer->meshCount()};
+
+            for (UnsignedInt i = 0; i != _importer->meshCount(); ++i) {
+                Debug{} << "Importing mesh" << i << _importer->meshName(i);
+
+                Containers::Optional<Trade::MeshData> meshData = _importer->mesh(i);
+                if (!meshData || !meshData->hasAttribute(Trade::MeshAttribute::Normal) || meshData->primitive() != MeshPrimitive::Triangles) {
+                    Warning{} << "Cannot load the mesh, skipping";
+                    continue;
+                }
+            }
+
+            if (!meshes.empty() && meshes[0]) {
+                const auto map = DebugTools::ColorMap::turbo();
+
+                Containers::Array<Color4> colorsArray(x.rows());
+            }
+
+            return *_manipulator;
+        }
+
+        // Import multiple files from directory (check how to handle this)
+        // Containers::Array<Object&> import(const std::string& directory, const std::string& extension)
+        // {
+        //     if (Corrade::Utility::Directory::isDirectory(path))
+
+        //     Containers::Array<Object> objects;
+
+        //     for (auto& file : Corrade::Utility::Directory::list(directory)) {
+        //         auto pair = Corrade::Utility::Directory::splitExtension(file);
+        //         if (!extension.compare(pair.second)) {
+        //             arrayAppend(objects, import(Corrade::Utility::Directory::join(directory, file)));
+        //         }
+        //     }
+
+        //     return objects;
+        // }
+
+    protected:
+        // Recursively add objects from meshes
         void addObject(Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
             Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
             Containers::ArrayView<Containers::Optional<Trade::PhongMaterialData>> materials,
-            const Color4& color,
-            const Matrix4& transformation,
-            const Matrix4& primitive,
             Object3D& parent, UnsignedInt i);
 
         // Draw
@@ -137,10 +173,11 @@ namespace magnum_dynamics {
         Containers::Pointer<Camera> _camera;
 
         // Parent object
-        Object3D _manipulator;
+        Object* _manipulator;
 
         // Objects
         std::unordered_map<Object3D*, Containers::Pointer<DrawableObject>> _drawableObjects;
+        std::unordered_map<Object*, Containers::Pointer<DrawableObject>> _drawableObjs;
 
         // Drawables
         SceneGraph::DrawableGroup3D _drawables;

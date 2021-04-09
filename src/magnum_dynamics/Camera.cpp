@@ -4,7 +4,7 @@ namespace magnum_dynamics {
     Camera::Camera(Object3D& object) : Object3D{&object}
     {
         Vector3 center{0., 0., 0.};
-        Vector3 camera{0., 10., 10.};
+        Vector3 camera{0., 5., 5.};
         _front = (center - camera).normalized();
         _up = Vector3::zAxis();
         _right = Math::cross(_front, _up).normalized();
