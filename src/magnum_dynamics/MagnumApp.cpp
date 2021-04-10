@@ -1,5 +1,8 @@
 #include "magnum_dynamics/MagnumApp.hpp"
 
+#include "magnum_dynamics/tools/colormaps.hpp"
+#include "magnum_dynamics/tools/math.hpp"
+
 namespace magnum_dynamics {
     MagnumApp::MagnumApp(const Arguments& arguments)
         : Platform::Application{arguments, NoCreate}
@@ -51,7 +54,7 @@ namespace magnum_dynamics {
         _shadersManager.set<GL::AbstractShaderProgram>("vertex", new Shaders::VertexColor3D);
 
         // Default importer
-        setImporter("AnySceneImporter");
+        setImporter("AssimpImporter");
 
         // Read main arguments if present and load the scene
         // if (arguments.argc > 1) {
@@ -287,6 +290,75 @@ namespace magnum_dynamics {
 
                 // Set drawable mesh and default color
                 it.first->second->setMesh(*meshes[0]).setColor(0xffffff_rgbf);
+            }
+
+            return *it.first->first;
+        }
+
+        return *_manipulator;
+    }
+
+    Object& MagnumApp::plot(const std::string& file, const Eigen::VectorXd& x, const std::string& colormap)
+    {
+        // Check importer
+        if (!_importer)
+            std::exit(1);
+
+        // Import file
+        Debug{} << "Opening file" << file;
+        if (!_importer->openFile(file))
+            std::exit(4);
+
+        if (_importer->meshCount() != 1) {
+            Warning{} << "Cannot plot, zero or multiple meshes present";
+            return *_manipulator;
+        }
+
+        Debug{} << "Importing mesh" << 0 << _importer->meshName(0);
+
+        Containers::Optional<Trade::MeshData> meshData = _importer->mesh(0);
+
+        if (!meshData || !meshData->hasAttribute(Trade::MeshAttribute::Normal) || meshData->primitive() != MeshPrimitive::Triangles) {
+            Warning{} << "Cannot load the mesh, skipping";
+        }
+        else {
+            auto map = tools::Turbo;
+
+            Containers::Array<Color4> colorsArray(x.rows());
+
+            Eigen::VectorXi mapToColors = tools::mapColors(x, x.minCoeff(), x.maxCoeff(), 256);
+
+            size_t iter = 0;
+            for (auto& color : colorsArray) {
+                color = Color4(mapToColors(iter));
+                iter++;
+            }
+
+            std::cout << "Index count: " << meshData->vertexCount() << std::endl;
+
+            GL::Buffer vertices;
+            vertices.setData(MeshTools::interleave(meshData->positions3DAsArray(), colorsArray));
+
+            std::pair<Containers::Array<char>, MeshIndexType> compressed = MeshTools::compressIndices(meshData->indicesAsArray());
+            GL::Buffer indices;
+            indices.setData(compressed.first);
+
+            GL::Mesh mesh;
+
+            mesh
+                .setPrimitive(meshData->primitive())
+                .setCount(meshData->indexCount())
+                .addVertexBuffer(std::move(vertices), 0, Shaders::VertexColor3D::Position{}, Shaders::VertexColor3D::Color4{})
+                .setIndexBuffer(std::move(indices), 0, compressed.second);
+
+            auto it = _drawableObjs.insert(std::make_pair(new Object(_manipulator, _drawableObjs), nullptr));
+
+            if (it.second) {
+                // Create drawable
+                it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
+
+                // Set drawable mesh
+                it.first->second->setMesh(mesh);
             }
 
             return *it.first->first;

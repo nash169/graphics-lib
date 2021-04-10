@@ -40,6 +40,9 @@ def configure(cfg):
         "Sdl2Application,Primitives,Shaders,MeshTools,SceneGraph,Trade,GL,DebugTools"
     )
     cfg.options.magnum_integrations = "Eigen"
+
+    cfg.options.magnum_plugins = "AssimpImporter"
+
     cfg.load("flags magnum", tooldir="waf_tools")
 
     # Remove duplicates

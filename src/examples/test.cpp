@@ -3,6 +3,7 @@
 #include <magnum_dynamics/MagnumApp.hpp>
 #include <magnum_dynamics/Object.hpp>
 
+#include <Magnum/DebugTools/ColorMap.h>
 #include <Magnum/DebugTools/ObjectRenderer.h>
 #include <Magnum/DebugTools/ResourceManager.h>
 
@@ -12,21 +13,24 @@ int main(int argc, char** argv)
 {
     MagnumApp app({argc, argv});
 
-    app.addPrimitive("cube")
-        .setPrimitiveTransformation(Matrix4())
-        .setTransformation(Matrix4::translation({0.0f, -2.0f, 0.0f}))
-        .setColor(0xff0000_rgbf);
+    // app.addPrimitive("cube")
+    //     .setPrimitiveTransformation(Matrix4())
+    //     .setTransformation(Matrix4::translation({0.0f, -2.0f, 0.0f}))
+    //     .setColor(0xff0000_rgbf);
 
-    app.addPrimitive("cube")
-        .setPrimitiveTransformation(Matrix4::scaling({0.5f, 0.5f, 0.5f}))
-        .setTransformation(Matrix4::translation({0.0f, 2.0f, 0.0f}))
-        .setColor(0x00ff00_rgbf);
+    // app.addPrimitive("cube")
+    //     .setPrimitiveTransformation(Matrix4::scaling({0.5f, 0.5f, 0.5f}))
+    //     .setTransformation(Matrix4::translation({0.0f, 2.0f, 0.0f}))
+    //     .setColor(0x00ff00_rgbf);
 
-    app.addFrame()
-        .setTransformation(Matrix4::scaling({0.5f, 0.5f, 0.5f}));
+    // app.addFrame()
+    //     .setTransformation(Matrix4::scaling({0.5f, 0.5f, 0.5f}));
 
-    app.import("rsc/franka/link0.dae");
+    // app.import("rsc/franka/link0.dae");
     // app.import("rsc/iiwa/link_0.obj");
+    Eigen::VectorXd test = Eigen::VectorXd::Random(6594);
+    app.plot("rsc/fem/torus.stl", test);
+    // .setColor(0xff0000_rgbf);
 
     // app.manipulator().children().first()->transformation()
 

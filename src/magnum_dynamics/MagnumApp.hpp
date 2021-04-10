@@ -57,6 +57,8 @@
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
 
+#include <MagnumPlugins/AssimpImporter/AssimpImporter.h>
+
 #include <Magnum/DebugTools/ColorMap.h>
 
 /* Magnum Integration */
@@ -65,8 +67,6 @@
 #include "magnum_dynamics/Camera.hpp"
 #include "magnum_dynamics/DrawableObject.hpp"
 #include "magnum_dynamics/Object.hpp"
-
-// #include "magnum_dynamics/utils/math.hpp"
 
 namespace magnum_dynamics {
     using namespace Magnum;
@@ -104,37 +104,7 @@ namespace magnum_dynamics {
         Object& import(const std::string& file);
 
         // To plot a surface basically but it can be more general
-        Object& plot(const std::string& file, const Eigen::VectorXd& x, const std::string& colormap)
-        {
-            // Check importer
-            if (!_importer)
-                std::exit(1);
-
-            // Import file
-            Debug{} << "Opening file" << file;
-            if (!_importer->openFile(file))
-                std::exit(4);
-
-            Containers::Array<Containers::Optional<GL::Mesh>> meshes{_importer->meshCount()};
-
-            for (UnsignedInt i = 0; i != _importer->meshCount(); ++i) {
-                Debug{} << "Importing mesh" << i << _importer->meshName(i);
-
-                Containers::Optional<Trade::MeshData> meshData = _importer->mesh(i);
-                if (!meshData || !meshData->hasAttribute(Trade::MeshAttribute::Normal) || meshData->primitive() != MeshPrimitive::Triangles) {
-                    Warning{} << "Cannot load the mesh, skipping";
-                    continue;
-                }
-            }
-
-            if (!meshes.empty() && meshes[0]) {
-                const auto map = DebugTools::ColorMap::turbo();
-
-                Containers::Array<Color4> colorsArray(x.rows());
-            }
-
-            return *_manipulator;
-        }
+        Object& plot(const std::string& file, const Eigen::VectorXd& x, const std::string& colormap = "turbo");
 
         // Import multiple files from directory (check how to handle this)
         // Containers::Array<Object&> import(const std::string& directory, const std::string& extension)
