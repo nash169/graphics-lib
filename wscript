@@ -41,7 +41,7 @@ def configure(cfg):
     )
     cfg.options.magnum_integrations = "Eigen"
 
-    cfg.options.magnum_plugins = "AssimpImporter"
+    # cfg.options.magnum_plugins = "AssimpImporter"
 
     cfg.load("flags magnum", tooldir="waf_tools")
 

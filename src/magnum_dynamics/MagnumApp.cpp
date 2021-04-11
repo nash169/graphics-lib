@@ -54,7 +54,7 @@ namespace magnum_dynamics {
         _shadersManager.set<GL::AbstractShaderProgram>("vertex", new Shaders::VertexColor3D);
 
         // Default importer
-        setImporter("AssimpImporter");
+        setImporter("AnySceneImporter");
 
         // Read main arguments if present and load the scene
         // if (arguments.argc > 1) {
