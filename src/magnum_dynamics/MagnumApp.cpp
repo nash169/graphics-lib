@@ -300,6 +300,9 @@ namespace magnum_dynamics {
 
     Object& MagnumApp::plot(const std::string& file, const Eigen::VectorXd& x, const std::string& colormap)
     {
+        setImporter("AssimpImporter");
+        // _importer->configuration()
+
         // Check importer
         if (!_importer)
             std::exit(1);
@@ -318,38 +321,40 @@ namespace magnum_dynamics {
 
         Containers::Optional<Trade::MeshData> meshData = _importer->mesh(0);
 
-        if (!meshData || !meshData->hasAttribute(Trade::MeshAttribute::Normal) || meshData->primitive() != MeshPrimitive::Triangles) {
+        if (!meshData || meshData->primitive() != MeshPrimitive::Triangles) {
             Warning{} << "Cannot load the mesh, skipping";
         }
         else {
             auto map = tools::Turbo;
 
-            Containers::Array<Color4> colorsArray(x.rows());
+            struct VertexData {
+                Vector3 position;
+                Color3 color;
+            };
 
-            Eigen::VectorXi mapToColors = tools::mapColors(x, x.minCoeff(), x.maxCoeff(), 256);
+            Containers::Array<VertexData> data;
 
-            size_t iter = 0;
-            for (auto& color : colorsArray) {
-                color = Color4(mapToColors(iter));
-                iter++;
-            }
+            /* Plot the loaded mesh */
+            Eigen::VectorXi vertex2Color = tools::mapColors(x, x.minCoeff(), x.maxCoeff(), 256);
+            for (auto& i : meshData->indicesAsArray())
+                arrayAppend(data, Containers::InPlaceInit, meshData->positions3DAsArray()[i], Color3{map[vertex2Color(i)][0], map[vertex2Color(i)][1], map[vertex2Color(i)][2]});
 
-            std::cout << "Index count: " << meshData->vertexCount() << std::endl;
+            /* Plot the cube */
+            // Trade::MeshData cube_mesh = Primitives::cubeSolid();
+            // Eigen::VectorXd val = Eigen::VectorXd::Random(24);
+            // Eigen::VectorXi vertex2Color = tools::mapColors(val, val.minCoeff(), val.maxCoeff(), 256);
+            // for (auto& i : cube_mesh.indicesAsArray())
+            //     arrayAppend(data, Containers::InPlaceInit, cube_mesh.positions3DAsArray()[i], Color3{map[vertex2Color(i)][0], map[vertex2Color(i)][1], map[vertex2Color(i)][2]});
 
-            GL::Buffer vertices;
-            vertices.setData(MeshTools::interleave(meshData->positions3DAsArray(), colorsArray));
-
-            std::pair<Containers::Array<char>, MeshIndexType> compressed = MeshTools::compressIndices(meshData->indicesAsArray());
-            GL::Buffer indices;
-            indices.setData(compressed.first);
+            GL::Buffer buffer;
+            buffer.setData(data);
 
             GL::Mesh mesh;
-
-            mesh
-                .setPrimitive(meshData->primitive())
-                .setCount(meshData->indexCount())
-                .addVertexBuffer(std::move(vertices), 0, Shaders::VertexColor3D::Position{}, Shaders::VertexColor3D::Color4{})
-                .setIndexBuffer(std::move(indices), 0, compressed.second);
+            mesh.setPrimitive(MeshPrimitive::Triangles)
+                .setCount(data.size())
+                .addVertexBuffer(std::move(buffer), 0,
+                    Shaders::VertexColor3D::Position{},
+                    Shaders::VertexColor3D::Color3{});
 
             auto it = _drawableObjs.insert(std::make_pair(new Object(_manipulator, _drawableObjs), nullptr));
 

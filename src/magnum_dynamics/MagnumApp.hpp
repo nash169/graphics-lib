@@ -36,6 +36,7 @@
 
 #include <Magnum/Primitives/Axis.h>
 #include <Magnum/Primitives/Cube.h>
+#include <Magnum/Primitives/Icosphere.h>
 
 #include <Magnum/SceneGraph/Camera.h>
 #include <Magnum/SceneGraph/Drawable.h>
