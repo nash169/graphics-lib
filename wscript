@@ -119,3 +119,7 @@ def build(bld):
             "${PREFIX}/lib",
             blddir + "/lib" + bld.get_env()["libname"] + "." + bld.env.SUFFIX,
         )
+
+    # Install tools
+    bld.install_files("${PREFIX}/share/waf", "scripts/magnum_dynamics.py")
+    bld.install_files("${PREFIX}/share/waf", "waf_tools/utils.py")
