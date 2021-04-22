@@ -17,6 +17,7 @@ def options(opt):
     opt.load("compiler_cxx")
 
     # Load tools options
+    opt.load("utils_cpp", tooldir="/usr/local/share/waf")
     opt.load("flags magnum", tooldir="waf_tools")
 
     # Add options
@@ -42,7 +43,7 @@ def configure(cfg):
     cfg.options.magnum_integrations = "Eigen"
 
     # cfg.options.magnum_plugins = "AssimpImporter"
-
+    cfg.load("utils_cpp", tooldir="/usr/local/share/waf")
     cfg.load("flags magnum", tooldir="waf_tools")
 
     # Remove duplicates
