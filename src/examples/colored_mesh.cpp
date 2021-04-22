@@ -13,7 +13,7 @@ int main(int argc, char** argv)
     // Load mesh
     utils_cpp::FileManager io_manager;
     Eigen::MatrixXd vertices = io_manager.setFile("rsc/fem/sphere.msh").read<Eigen::MatrixXd>("$Nodes", 2),
-                    indices = io_manager.read<Eigen::MatrixXd>("$Elements", 2);
+                    indices = io_manager.read<Eigen::MatrixXd>("$Elements", 2).array() - 1;
 
     Eigen::VectorXd fun = Eigen::VectorXd::Random(vertices.rows()),
                     fun2 = Eigen::VectorXd::Random(9564); // Assimp importer increases the number of vertices for some reason

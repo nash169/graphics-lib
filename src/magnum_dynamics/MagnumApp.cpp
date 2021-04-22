@@ -314,7 +314,7 @@ namespace magnum_dynamics {
 
         for (size_t i = 0; i < indices.rows(); i++)
             for (size_t j = 0; j < 3; j++) {
-                size_t index = indices(i, j) - 1;
+                size_t index = indices(i, j);
                 Eigen::Vector3f vertex = vertices.row(index).cast<float>();
                 arrayAppend(data, Containers::InPlaceInit, Vector3(vertex),
                     Color3{map[vertex2Color(index)][0], map[vertex2Color(index)][1], map[vertex2Color(index)][2]});
