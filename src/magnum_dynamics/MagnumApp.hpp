@@ -105,7 +105,8 @@ namespace magnum_dynamics {
         Object& import(const std::string& file);
 
         // To plot a surface basically but it can be more general
-        Object& plot(const std::string& file, const Eigen::VectorXd& x, const std::string& colormap = "turbo");
+        Object& plot(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& fun, const Eigen::MatrixXd& indices, const std::string& colormap = "turbo");
+        Object& plot(const std::string& file, const Eigen::VectorXd& fun, const std::string& colormap = "turbo");
 
         // Import multiple files from directory (check how to handle this)
         // Containers::Array<Object&> import(const std::string& directory, const std::string& extension)

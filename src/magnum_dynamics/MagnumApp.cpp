@@ -298,6 +298,51 @@ namespace magnum_dynamics {
         return *_manipulator;
     }
 
+    Object& MagnumApp::plot(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& function, const Eigen::MatrixXd& indices, const std::string& colormap)
+    {
+        auto map = tools::Turbo;
+
+        struct VertexData {
+            Vector3 position;
+            Color3 color;
+        };
+
+        Containers::Array<VertexData> data;
+
+        /* Plot the loaded mesh */
+        Eigen::VectorXi vertex2Color = tools::mapColors(function, function.minCoeff(), function.maxCoeff(), 256);
+
+        for (size_t i = 0; i < indices.rows(); i++)
+            for (size_t j = 0; j < 3; j++) {
+                size_t index = indices(i, j) - 1;
+                Eigen::Vector3f vertex = vertices.row(index).cast<float>();
+                arrayAppend(data, Containers::InPlaceInit, Vector3(vertex),
+                    Color3{map[vertex2Color(index)][0], map[vertex2Color(index)][1], map[vertex2Color(index)][2]});
+            }
+
+        GL::Buffer buffer;
+        buffer.setData(data);
+
+        GL::Mesh mesh;
+        mesh.setPrimitive(MeshPrimitive::Triangles)
+            .setCount(data.size())
+            .addVertexBuffer(std::move(buffer), 0,
+                Shaders::VertexColor3D::Position{},
+                Shaders::VertexColor3D::Color3{});
+
+        auto it = _drawableObjs.insert(std::make_pair(new Object(_manipulator, _drawableObjs), nullptr));
+
+        if (it.second) {
+            // Create drawable
+            it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
+
+            // Set drawable mesh
+            it.first->second->setMesh(mesh);
+        }
+
+        return *it.first->first;
+    }
+
     Object& MagnumApp::plot(const std::string& file, const Eigen::VectorXd& x, const std::string& colormap)
     {
         setImporter("AssimpImporter");
