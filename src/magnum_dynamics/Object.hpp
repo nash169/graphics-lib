@@ -19,7 +19,8 @@ namespace magnum_dynamics {
 
         Object& setTransformation(const Matrix4& transformation)
         {
-            Object3D::setTransformation(transformation * _primitive);
+            Object3D::setTransformation(transformation);
+            // Object3D::setTransformation(transformation * _primitive);
 
             return *this;
         }
