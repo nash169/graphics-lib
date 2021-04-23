@@ -40,7 +40,7 @@ def configure(cfg):
     cfg.options.magnum_components = (
         "Sdl2Application,Primitives,Shaders,MeshTools,SceneGraph,Trade,GL,DebugTools"
     )
-    cfg.options.magnum_integrations = "Eigen"
+    cfg.options.magnum_integrations = "Eigen,Bullet"
 
     # cfg.options.magnum_plugins = "AssimpImporter"
     cfg.load("utils_cpp", tooldir="/usr/local/share/waf")

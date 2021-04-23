@@ -28,7 +28,8 @@ def check_magnum_dynamics(ctx):
 
     # magnum-dynamics includes
     check_include(
-        ctx, "MAGNUMDYNAMICS", ["magnum_dynamics"], ["MagnumApp.hpp"], path_check
+        ctx, "MAGNUMDYNAMICS", ["magnum_dynamics"], [
+            "MagnumApp.hpp"], path_check
     )
 
     # magnum-dynamics libs
@@ -36,13 +37,14 @@ def check_magnum_dynamics(ctx):
 
     if ctx.env.LIB_MAGNUMDYNAMICS or ctx.env.STLIB_MAGNUMDYNAMICS:
         # Add dependencies to require libraries
-        ctx.get_env()["requires"] = ctx.get_env()["requires"] + ["EIGEN", "MAGNUM"]
+        ctx.get_env()["requires"] = ctx.get_env()[
+            "requires"] + ["EIGEN", "MAGNUM"]
 
         # Check for dependencies
         ctx.options.magnum_components = (
             "Sdl2Application,Primitives,Shaders,MeshTools,SceneGraph,Trade,GL"
         )
-        ctx.options.magnum_integrations = "Eigen"
+        ctx.options.magnum_integrations = "Eigen,Bullet"
 
         ctx.load("eigen magnum", tooldir="waf_tools")
 
