@@ -7,6 +7,9 @@
 #include "magnum_dynamics/DrawableObject.hpp"
 #include "magnum_dynamics/types.hpp"
 
+#include <iostream>
+#include <memory>
+
 using namespace Magnum;
 
 namespace magnum_dynamics {
@@ -15,41 +18,80 @@ namespace magnum_dynamics {
     public:
         Object(Object3D* object,
             std::unordered_map<Object*, Containers::Pointer<DrawableObject>>& drawableObj)
-            : Object3D{object}, _primitive(Matrix4()), _drawableObjects(drawableObj) {}
+            : Object3D{object}, _drawableObjects(drawableObj) {}
 
         Object& setTransformation(const Matrix4& transformation)
         {
             Object3D::setTransformation(transformation);
-            // Object3D::setTransformation(transformation * _primitive);
 
             return *this;
         }
 
-        // Not working
-        // Object& setPrimitiveTransformation(const Matrix4& primitive)
-        // {
-        //     _primitive = primitive;
+        /* Each object has access to the unordered map of drawables. 
+           Not each object is drawable; in this case it recursively 
+           search for drawble children to which apply the transformation. */
 
-        //     return *this;
-        // }
-
-        Object& setPrimitiveTransformation(const Matrix4& primitive)
+        Object& setMesh(GL::Mesh& mesh)
         {
-            _drawableObjects[this]->setPrimitiveTransformation(primitive);
+            if (_drawableObjects.find(this) == _drawableObjects.end()) {
+                for (auto& child : this->children())
+                    static_cast<Object&>(child).setMesh(mesh);
+            }
+            else
+                _drawableObjects[this]->setMesh(mesh);
+
+            return *this;
+        }
+
+        Object& setTexture(GL::Texture2D& texture)
+        {
+            if (_drawableObjects.find(this) == _drawableObjects.end()) {
+                for (auto& child : this->children())
+                    static_cast<Object&>(child).setTexture(texture);
+            }
+            else
+                _drawableObjects[this]->setTexture(texture);
+
+            return *this;
+        }
+
+        Object& setMaterial(Trade::PhongMaterialData& material)
+        {
+            if (_drawableObjects.find(this) == _drawableObjects.end()) {
+                for (auto& child : this->children())
+                    static_cast<Object&>(child).setMaterial(material);
+            }
+            else
+                _drawableObjects[this]->setMaterial(material);
 
             return *this;
         }
 
         Object& setColor(const Color4& color)
         {
-            _drawableObjects[this]->setColor(color);
+            if (_drawableObjects.find(this) == _drawableObjects.end()) {
+                for (auto& child : this->children())
+                    static_cast<Object&>(child).setColor(color);
+            }
+            else
+                _drawableObjects[this]->setColor(color);
+
+            return *this;
+        }
+
+        Object& setPrimitiveTransformation(const Matrix4& primitive)
+        {
+            if (_drawableObjects.find(this) == _drawableObjects.end()) {
+                for (auto& child : this->children())
+                    static_cast<Object&>(child).setPrimitiveTransformation(primitive);
+            }
+            else
+                _drawableObjects[this]->setPrimitiveTransformation(primitive);
 
             return *this;
         }
 
     private:
-        Matrix4 _primitive;
-
         std::unordered_map<Object*, Containers::Pointer<DrawableObject>>& _drawableObjects;
     };
 
