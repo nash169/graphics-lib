@@ -125,6 +125,11 @@ namespace magnum_dynamics {
         //     return objects;
         // }
 
+        Containers::Pointer<Camera>& camera()
+        {
+            return _camera;
+        }
+
     protected:
         // Recursively add objects from meshes
         void addObject(Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,

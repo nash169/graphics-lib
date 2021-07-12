@@ -3,6 +3,9 @@
 #include "magnum_dynamics/tools/colormaps.hpp"
 #include "magnum_dynamics/tools/math.hpp"
 
+#include <Corrade/Containers/StridedArrayView.h>
+#include <Magnum/MeshTools/Duplicate.h>
+
 namespace magnum_dynamics {
     MagnumApp::MagnumApp(const Arguments& arguments)
         : Platform::Application{arguments, NoCreate}
@@ -35,23 +38,23 @@ namespace magnum_dynamics {
         // GL::Renderer::setPolygonOffset(2.0f, 0.5f);
 
         // Set colored shader
-        _shadersManager.set<GL::AbstractShaderProgram>("color", new Shaders::Phong{{}, 2});
+        _shadersManager.set<GL::AbstractShaderProgram>("color", new Shaders::PhongGL{{}, 2});
 
-        _shadersManager.get<GL::AbstractShaderProgram, Shaders::Phong>("color")
+        _shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("color")
             ->setAmbientColor(0x111111_rgbf)
             .setSpecularColor(0xffffff_rgbf)
             .setShininess(80.0f);
 
         // Set texture shader
-        _shadersManager.set<GL::AbstractShaderProgram>("texture", new Shaders::Phong(Shaders::Phong::Flag::DiffuseTexture, 2));
+        _shadersManager.set<GL::AbstractShaderProgram>("texture", new Shaders::PhongGL(Shaders::PhongGL::Flag::DiffuseTexture, 2));
 
-        _shadersManager.get<GL::AbstractShaderProgram, Shaders::Phong>("texture")
+        _shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("texture")
             ->setAmbientColor(0x111111_rgbf)
             .setSpecularColor(0x111111_rgbf)
             .setShininess(80.0f);
 
         // Set vertex shader
-        _shadersManager.set<GL::AbstractShaderProgram>("vertex", new Shaders::VertexColor3D);
+        _shadersManager.set<GL::AbstractShaderProgram>("vertex", new Shaders::VertexColorGL3D);
 
         // Default importer
         setImporter("AnySceneImporter");
@@ -300,7 +303,36 @@ namespace magnum_dynamics {
 
     Object& MagnumApp::plot(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& function, const Eigen::MatrixXd& indices, const std::string& colormap)
     {
+        // Vertices
+        Containers::Array<Vector3> nodes;
+
+        for (size_t i = 0; i < vertices.rows(); i++) {
+            Eigen::Vector3f vertex = vertices.row(i).cast<float>();
+            arrayAppend(nodes, Corrade::InPlaceInit, Vector3(vertex));
+        }
+        Containers::StridedArrayView1D<const Vector3> indexedPositions = nodes;
+
+        // Indices
+        Containers::Array<UnsignedInt> id;
+        for (size_t i = 0; i < indices.rows(); i++)
+            for (size_t j = 0; j < indices.cols(); j++)
+                arrayAppend(id, Corrade::InPlaceInit, UnsignedInt(indices(i, j)));
+        Containers::StridedArrayView1D<const UnsignedInt> idx = id;
+
+        // Colors
+        Containers::Array<Color3> col;
         auto map = tools::Turbo;
+        Eigen::VectorXi vertex2Color = tools::mapColors(function, -1, 1, 256);
+        for (size_t i = 0; i < vertex2Color.rows(); i++)
+            arrayAppend(col, Corrade::InPlaceInit, Color3{map[vertex2Color(i)][0], map[vertex2Color(i)][1], map[vertex2Color(i)][2]});
+        Containers::StridedArrayView1D<const Color3> indexedColors = col;
+
+        Containers::Array<Vector3> vtx = MeshTools::duplicate(idx, indexedPositions);
+        GL::Buffer interleaved_nodes;
+        interleaved_nodes.setData(MeshTools::interleave(MeshTools::duplicate(idx, indexedPositions), MeshTools::duplicate(idx, indexedColors)), GL::BufferUsage::StaticDraw);
+
+        // std::cout << vtx.size() << std::endl;
+        // std::cout << interleaved_nodes.size() << std::endl;
 
         struct VertexData {
             Vector3 position;
@@ -310,23 +342,24 @@ namespace magnum_dynamics {
         Containers::Array<VertexData> data;
 
         /* Plot the loaded mesh */
-        Eigen::VectorXi vertex2Color = tools::mapColors(function, function.minCoeff(), function.maxCoeff(), 256);
 
         for (size_t i = 0; i < indices.rows(); i++)
             for (size_t j = 0; j < 3; j++) {
                 size_t index = indices(i, j);
                 Eigen::Vector3f vertex = vertices.row(index).cast<float>();
-                arrayAppend(data, Containers::InPlaceInit, Vector3(vertex),
+                arrayAppend(data, Corrade::InPlaceInit, Vector3(vertex),
                     Color3{map[vertex2Color(index)][0], map[vertex2Color(index)][1], map[vertex2Color(index)][2]});
             }
 
         GL::Buffer buffer;
         buffer.setData(data);
 
+        // std::cout << data.size() << std::endl;
+        // std::cout << buffer.size() << std::endl;
+
         GL::Mesh mesh;
-        mesh.setPrimitive(MeshPrimitive::Triangles)
-            .setCount(data.size())
-            .addVertexBuffer(std::move(buffer), 0,
+        mesh.setCount(idx.size())
+            .addVertexBuffer(interleaved_nodes, 0,
                 Shaders::VertexColor3D::Position{},
                 Shaders::VertexColor3D::Color3{});
 
@@ -382,7 +415,7 @@ namespace magnum_dynamics {
             /* Plot the loaded mesh */
             Eigen::VectorXi vertex2Color = tools::mapColors(x, x.minCoeff(), x.maxCoeff(), 256);
             for (auto& i : meshData->indicesAsArray())
-                arrayAppend(data, Containers::InPlaceInit, meshData->positions3DAsArray()[i], Color3{map[vertex2Color(i)][0], map[vertex2Color(i)][1], map[vertex2Color(i)][2]});
+                arrayAppend(data, Corrade::InPlaceInit, meshData->positions3DAsArray()[i], Color3{map[vertex2Color(i)][0], map[vertex2Color(i)][1], map[vertex2Color(i)][2]});
 
             /* Plot the cube */
             // Trade::MeshData cube_mesh = Primitives::cubeSolid();
@@ -511,33 +544,52 @@ namespace magnum_dynamics {
             _previousPosition = Vector3();
     }
 
+    // void MagnumApp::mouseScrollEvent(MouseScrollEvent& event)
+    // {
+    //     if (!event.offset().y())
+    //         return;
+
+    //     // Vector3 center = {29.538, 38.7425, 25.2313};
+
+    //     /* Distance to origin */
+    //     const Vector3 distance = (*_camera->object()).transformation().translation();
+
+    //     /* Move 15% of the distance back or forward */
+    //     (*_camera->object()).translate(distance * (1.0f - (event.offset().y() > 0 ? 1 / 0.85f : 0.85f)));
+
+    //     redraw();
+    // }
+
     void MagnumApp::mouseScrollEvent(MouseScrollEvent& event)
     {
-        if (!event.offset().y())
-            return;
-
-        /* Distance to origin */
-        const Vector3 distance = (*_camera->object()).transformation().translation();
-
-        /* Move 15% of the distance back or forward */
-        (*_camera->object()).translate(distance * (1.0f - (event.offset().y() > 0 ? 1 / 0.85f : 0.85f)));
+        if (event.offset().y())
+            _camera->translate(event.offset().y());
 
         redraw();
     }
 
+    // void MagnumApp::mouseMoveEvent(MouseMoveEvent& event)
+    // {
+    //     if (!(event.buttons() & MouseMoveEvent::Button::Left))
+    //         return;
+
+    //     const Vector3 currentPosition = positionOnSphere(event.position());
+    //     const Vector3 axis = Math::cross(_previousPosition, currentPosition);
+
+    //     if (_previousPosition.length() < 0.001f || axis.length() < 0.001f)
+    //         return;
+
+    //     _manipulator->rotate(Math::angle(_previousPosition, currentPosition), axis.normalized());
+    //     _previousPosition = currentPosition;
+
+    //     redraw();
+    // }
+
     void MagnumApp::mouseMoveEvent(MouseMoveEvent& event)
     {
-        if (!(event.buttons() & MouseMoveEvent::Button::Left))
-            return;
-
-        const Vector3 currentPosition = positionOnSphere(event.position());
-        const Vector3 axis = Math::cross(_previousPosition, currentPosition);
-
-        if (_previousPosition.length() < 0.001f || axis.length() < 0.001f)
-            return;
-
-        _manipulator->rotate(Math::angle(_previousPosition, currentPosition), axis.normalized());
-        _previousPosition = currentPosition;
+        if (event.buttons() == MouseMoveEvent::Button::Left) {
+            _camera->move(event.relativePosition());
+        }
 
         redraw();
     }
