@@ -11,13 +11,20 @@ APPNAME = "magnum-dynamics"
 srcdir = "."
 blddir = "build"
 
+# Tools' name and directory
+tools = {"utils_cpp": "/home/bernardo/devs/utils-cpp/install"}
+
 
 def options(opt):
     # Load C++ compiler options
     opt.load("compiler_cxx")
 
-    # Load tools options
-    opt.load("utils_cpp", tooldir="/usr/local/share/waf")
+    # Load personal tools options
+    for key in tools:
+        opt.load(key, tooldir=os.path.join(
+            tools[key], "share/waf"))
+
+    # Load external tools options
     opt.load("flags magnum", tooldir="waf_tools")
 
     # Add options
@@ -36,14 +43,18 @@ def configure(cfg):
     # Load C++ compiler configuration
     cfg.load("compiler_cxx")
 
-    # Load tools configurations
+    # Tools options
     cfg.options.magnum_components = (
         "Sdl2Application,Primitives,Shaders,MeshTools,SceneGraph,Trade,GL,DebugTools"
     )
     cfg.options.magnum_integrations = "Eigen,Bullet"
 
-    # cfg.options.magnum_plugins = "AssimpImporter"
-    cfg.load("utils_cpp", tooldir="/usr/local/share/waf")
+    # Load personal tools configurations
+    for key in tools:
+        cfg.load(key, tooldir=os.path.join(
+            tools[key], "share/waf"))
+
+    # Load external tools configurations
     cfg.load("flags magnum", tooldir="waf_tools")
 
     # Remove duplicates
