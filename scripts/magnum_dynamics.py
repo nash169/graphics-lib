@@ -28,8 +28,8 @@ def check_magnum_dynamics(ctx):
 
     # magnum-dynamics includes
     check_include(
-        ctx, "MAGNUMDYNAMICS", ["magnum_dynamics"], [
-            "MagnumApp.hpp"], path_check
+        ctx, "MAGNUMDYNAMICS", [""], [
+            "magnum_dynamics/MagnumApp.hpp"], path_check
     )
 
     # magnum-dynamics libs
