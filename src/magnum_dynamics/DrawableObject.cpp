@@ -40,7 +40,7 @@ namespace magnum_dynamics {
 
         // If texture is present use texture shader (Phong::Flag::DiffuseTexture)
         if (_texture)
-            (*_shadersManager.get<GL::AbstractShaderProgram, Shaders::Phong>("texture"))
+            (*_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("texture"))
                 // .setLightPositions({{camera.cameraMatrix().transformPoint({0.0f, 2.0f, 3.0f}), 0.0f},
                 //     {camera.cameraMatrix().transformPoint({0.0f, -2.0f, 3.0f}), 0.0f}})
                 .setTransformationMatrix(transformation)
@@ -50,7 +50,7 @@ namespace magnum_dynamics {
                 .draw(_mesh);
         // if material is present (but not texture) use color shader (Phong)
         else if (_material)
-            (*_shadersManager.get<GL::AbstractShaderProgram, Shaders::Phong>("color"))
+            (*_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("color"))
                 .setAmbientColor(_material->ambientColor())
                 .setDiffuseColor(_material->diffuseColor())
                 .setSpecularColor(_material->specularColor())
@@ -63,7 +63,7 @@ namespace magnum_dynamics {
                 .draw(_mesh);
         // if color is present (but not texture and material) use color shader (Phong) with fewer color options
         else if (_color)
-            (*_shadersManager.get<GL::AbstractShaderProgram, Shaders::Phong>("color"))
+            (*_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("color"))
                 .setDiffuseColor(*_color)
                 // .setLightPositions({{camera.cameraMatrix().transformPoint({0.0f, 2.0f, 3.0f}), 0.0f},
                 //     {camera.cameraMatrix().transformPoint({0.0f, -2.0f, 3.0f}), 0.0f}})
@@ -73,7 +73,7 @@ namespace magnum_dynamics {
                 .draw(_mesh);
         // else use vertex shader (Phong::Flag::VertexColor)
         else
-            (*_shadersManager.get<GL::AbstractShaderProgram, Shaders::VertexColor3D>("vertex"))
+            (*_shadersManager.get<GL::AbstractShaderProgram, Shaders::VertexColorGL3D>("vertex"))
                 .setTransformationProjectionMatrix(camera.projectionMatrix() * transformation)
                 .draw(_mesh);
     }
