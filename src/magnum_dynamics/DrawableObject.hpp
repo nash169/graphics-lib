@@ -13,7 +13,7 @@
 #include <Magnum/SceneGraph/Drawable.h>
 #include <Magnum/SceneGraph/MatrixTransformation3D.h>
 #include <Magnum/Shaders/Phong.h>
-#include <Magnum/Shaders/VertexColor.h>
+#include <Magnum/Shaders/VertexColorGL.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 
 namespace magnum_dynamics {

@@ -6,6 +6,8 @@
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Magnum/MeshTools/Duplicate.h>
 
+#include <utils_cpp/UtilsCpp.hpp>
+
 namespace magnum_dynamics {
     MagnumApp::MagnumApp(const Arguments& arguments)
         : Platform::Application{arguments, NoCreate}
@@ -141,8 +143,8 @@ namespace magnum_dynamics {
         mesh
             .setPrimitive(mesh_data.primitive())
             .setCount(mesh_data.indexCount())
-            .addVertexBuffer(std::move(vertices), 0, Shaders::Phong::Position{},
-                Shaders::Phong::Normal{})
+            .addVertexBuffer(std::move(vertices), 0, Shaders::PhongGL::Position{},
+                Shaders::PhongGL::Normal{})
             .setIndexBuffer(std::move(indices), 0, compressed.second);
 
         // Create 3D object
@@ -303,36 +305,38 @@ namespace magnum_dynamics {
 
     Object& MagnumApp::plot(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& function, const Eigen::MatrixXd& indices, const std::string& colormap)
     {
-        // Vertices
-        Containers::Array<Vector3> nodes;
-
-        for (size_t i = 0; i < vertices.rows(); i++) {
-            Eigen::Vector3f vertex = vertices.row(i).cast<float>();
-            arrayAppend(nodes, Corrade::InPlaceInit, Vector3(vertex));
-        }
-        Containers::StridedArrayView1D<const Vector3> indexedPositions = nodes;
-
-        // Indices
-        Containers::Array<UnsignedInt> id;
-        for (size_t i = 0; i < indices.rows(); i++)
-            for (size_t j = 0; j < indices.cols(); j++)
-                arrayAppend(id, Corrade::InPlaceInit, UnsignedInt(indices(i, j)));
-        Containers::StridedArrayView1D<const UnsignedInt> idx = id;
-
-        // Colors
-        Containers::Array<Color3> col;
         auto map = tools::Turbo;
-        Eigen::VectorXi vertex2Color = tools::mapColors(function, -1, 1, 256);
-        for (size_t i = 0; i < vertex2Color.rows(); i++)
-            arrayAppend(col, Corrade::InPlaceInit, Color3{map[vertex2Color(i)][0], map[vertex2Color(i)][1], map[vertex2Color(i)][2]});
-        Containers::StridedArrayView1D<const Color3> indexedColors = col;
+        Eigen::VectorXi vertex2Color = tools::mapColors(function, -1.5, 1.5, 256);
 
-        Containers::Array<Vector3> vtx = MeshTools::duplicate(idx, indexedPositions);
-        GL::Buffer interleaved_nodes;
-        interleaved_nodes.setData(MeshTools::interleave(MeshTools::duplicate(idx, indexedPositions), MeshTools::duplicate(idx, indexedColors)), GL::BufferUsage::StaticDraw);
+        // {
+        //     utils_cpp::Timer timer;
+        //     // Vertices
+        //     Containers::Array<Vector3> nodes;
 
-        // std::cout << vtx.size() << std::endl;
-        // std::cout << interleaved_nodes.size() << std::endl;
+        //     for (size_t i = 0; i < vertices.rows(); i++) {
+        //         Eigen::Vector3f vertex = vertices.row(i).cast<float>();
+        //         arrayAppend(nodes, Corrade::InPlaceInit, Vector3(vertex));
+        //     }
+        //     Containers::StridedArrayView1D<const Vector3> indexedPositions = nodes;
+
+        //     // Indices
+        //     Containers::Array<UnsignedInt> id;
+        //     for (size_t i = 0; i < indices.rows(); i++)
+        //         for (size_t j = 0; j < indices.cols(); j++)
+        //             arrayAppend(id, Corrade::InPlaceInit, UnsignedInt(indices(i, j)));
+        //     Containers::StridedArrayView1D<const UnsignedInt> idx = id;
+
+        //     // Colors
+        //     Containers::Array<Color3> col;
+
+        //     for (size_t i = 0; i < vertex2Color.rows(); i++)
+        //         arrayAppend(col, Corrade::InPlaceInit, Color3{map[vertex2Color(i)][0], map[vertex2Color(i)][1], map[vertex2Color(i)][2]});
+        //     Containers::StridedArrayView1D<const Color3> indexedColors = col;
+
+        //     Containers::Array<Vector3> vtx = MeshTools::duplicate(idx, indexedPositions);
+        //     GL::Buffer interleaved_nodes;
+        //     interleaved_nodes.setData(MeshTools::interleave(MeshTools::duplicate(idx, indexedPositions), MeshTools::duplicate(idx, indexedColors)), GL::BufferUsage::StaticDraw);
+        // }
 
         struct VertexData {
             Vector3 position;
@@ -344,7 +348,7 @@ namespace magnum_dynamics {
         /* Plot the loaded mesh */
 
         for (size_t i = 0; i < indices.rows(); i++)
-            for (size_t j = 0; j < 3; j++) {
+            for (size_t j = 0; j < indices.cols(); j++) {
                 size_t index = indices(i, j);
                 Eigen::Vector3f vertex = vertices.row(index).cast<float>();
                 arrayAppend(data, Corrade::InPlaceInit, Vector3(vertex),
@@ -354,14 +358,11 @@ namespace magnum_dynamics {
         GL::Buffer buffer;
         buffer.setData(data);
 
-        // std::cout << data.size() << std::endl;
-        // std::cout << buffer.size() << std::endl;
-
         GL::Mesh mesh;
-        mesh.setCount(idx.size())
-            .addVertexBuffer(interleaved_nodes, 0,
-                Shaders::VertexColor3D::Position{},
-                Shaders::VertexColor3D::Color3{});
+        mesh.setCount(data.size())
+            .addVertexBuffer(std::move(buffer), 0,
+                Shaders::VertexColorGL3D::Position{},
+                Shaders::VertexColorGL3D::Color3{});
 
         auto it = _drawableObjs.insert(std::make_pair(new Object(_manipulator, _drawableObjs), nullptr));
 
@@ -431,8 +432,8 @@ namespace magnum_dynamics {
             mesh.setPrimitive(MeshPrimitive::Triangles)
                 .setCount(data.size())
                 .addVertexBuffer(std::move(buffer), 0,
-                    Shaders::VertexColor3D::Position{},
-                    Shaders::VertexColor3D::Color3{});
+                    Shaders::VertexColorGL3D::Position{},
+                    Shaders::VertexColorGL3D::Color3{});
 
             auto it = _drawableObjs.insert(std::make_pair(new Object(_manipulator, _drawableObjs), nullptr));
 

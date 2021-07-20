@@ -46,7 +46,7 @@
 #include <Magnum/SceneGraph/SceneGraph.h>
 
 #include <Magnum/Shaders/Phong.h>
-#include <Magnum/Shaders/VertexColor.h>
+#include <Magnum/Shaders/VertexColorGL.h>
 
 #include <Magnum/ResourceManager.h>
 

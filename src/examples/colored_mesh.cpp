@@ -24,6 +24,8 @@ int main(int argc, char** argv)
 
     Eigen::VectorXd ground = io_manager.setFile("rsc/data/ground_truth.csv").read<Eigen::MatrixXd>();
 
+    std::cout << fun.minCoeff() << " : " << fun.maxCoeff() << std::endl;
+
     app.plot(vertices.block(0, 1, vertices.rows(), 3), fun, indices.block(0, 5, indices.rows(), 3));
     // .setTransformation(Matrix4::scaling({0.05, 0.05, 0.05}));
     // .setTransformation(Matrix4::translation({-2.0f, 0.0f, 0.0f}));
@@ -31,16 +33,16 @@ int main(int argc, char** argv)
     // app.plot("rsc/fem/sphere.stl", fun2)
     //     .setTransformation(Matrix4::translation({2.0f, 0.0f, 0.0f}));
 
-    Eigen::Vector3f center = vertices.block(0, 1, vertices.rows(), 3).colwise().mean().cast<float>() * 0.05;
-    (*app.camera())
-        .setCenter(Vector3(center))
-        .setPose({10., 0., 5.});
+    // Eigen::Vector3f center = vertices.block(0, 1, vertices.rows(), 3).colwise().mean().cast<float>() * 0.05;
+    // (*app.camera())
+    //     .setCenter(Vector3(center))
+    //     .setPose({10., 0., 5.});
 
     // app.addFrame().setTransformation(Matrix4::translation(Vector3(center)));
 
-    app.addPrimitive("cube").setTransformation(Matrix4::translation(Vector3(center) + Vector3{5, 0, 0}));
+    // app.addPrimitive("cube").setTransformation(Matrix4::translation(Vector3(center) + Vector3{5, 0, 0}));
 
-    app.manipulator().setPrimitiveTransformation(Matrix4::scaling({0.05, 0.05, 0.05}));
+    // app.manipulator().setPrimitiveTransformation(Matrix4::scaling({0.05, 0.05, 0.05}));
 
     return app.exec();
 }
