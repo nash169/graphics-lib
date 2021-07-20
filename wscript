@@ -12,7 +12,7 @@ srcdir = "."
 blddir = "build"
 
 # Tools' name and directory
-tools = {"utils_cpp": "/home/bernardo/devs/utils-cpp/install"}
+tools = {"utils_cpp": "/Users/bernardo/Developments/utils-cpp/install"}
 
 
 def options(opt):
@@ -41,7 +41,7 @@ def configure(cfg):
     cfg.env.SUFFIX = "dylib" if cfg.env["DEST_OS"] == "darwin" else "so"
 
     # Load C++ compiler configuration
-    cfg.load("compiler_cxx")
+    cfg.load("compiler_cxx clang_compilation_database")
 
     # Tools options
     cfg.options.magnum_components = (
