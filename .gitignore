@@ -405,3 +405,5 @@ TSWLatexianTemp*
 
 # standalone packages
 *.sta
+
+waf_configure
