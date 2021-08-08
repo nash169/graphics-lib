@@ -36,6 +36,7 @@ namespace magnum_dynamics {
         /* Recall something from OpenGL study but don't precisely */
         GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
         GL::Renderer::enable(GL::Renderer::Feature::FaceCulling);
+        GL::Renderer::setClearColor(0xffffff_rgbf);
         // GL::Renderer::enable(GL::Renderer::Feature::PolygonOffsetFill);
         // GL::Renderer::setPolygonOffset(2.0f, 0.5f);
 
@@ -303,10 +304,10 @@ namespace magnum_dynamics {
         return *_manipulator;
     }
 
-    Object& MagnumApp::plot(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& function, const Eigen::MatrixXd& indices, const std::string& colormap)
+    Object& MagnumApp::plot(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& function, const Eigen::MatrixXd& indices, const double& min, const double& max, const std::string& colormap)
     {
         auto map = tools::Turbo;
-        Eigen::VectorXi vertex2Color = tools::mapColors(function, -1.5, 1.5, 256);
+        Eigen::VectorXi vertex2Color = tools::mapColors(function, min, max, 256);
 
         // {
         //     utils_cpp::Timer timer;
