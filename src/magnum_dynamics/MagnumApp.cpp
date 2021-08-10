@@ -204,7 +204,7 @@ namespace magnum_dynamics {
             // Import texture
             Debug{} << "Importing texture" << i << _importer->textureName(i);
             Containers::Optional<Trade::TextureData> textureData = _importer->texture(i);
-            if (!textureData || textureData->type() != Trade::TextureData::Type::Texture2D) {
+            if (!textureData || textureData->type() != Trade::TextureType::Texture2D) {
                 Warning{} << "Cannot load texture properties, skipping";
                 continue;
             }
