@@ -20,12 +20,11 @@ namespace magnum_dynamics {
             std::unordered_map<Object*, Containers::Pointer<DrawableObject>>& drawableObj)
             : Object3D{object}, _drawableObjects(drawableObj) {}
 
-        Object& setTransformation(const Matrix4& transformation)
-        {
-            Object3D::setTransformation(transformation);
-
-            return *this;
-        }
+        // /* Object tranformation */
+        // Object& setTransformation(const Matrix4& transformation)
+        // {
+        //     return static_cast<Object&>(Object3D::setTransformation(transformation));
+        // }
 
         /* Each object has access to the unordered map of drawables. 
            Not each object is drawable; in this case it recursively 
@@ -79,17 +78,19 @@ namespace magnum_dynamics {
             return *this;
         }
 
-        Object& setPrimitiveTransformation(const Matrix4& primitive)
+        Object& addPriorTransformation(const Matrix4& transformation)
         {
             if (_drawableObjects.find(this) == _drawableObjects.end()) {
                 for (auto& child : this->children())
-                    static_cast<Object&>(child).setPrimitiveTransformation(primitive);
+                    static_cast<Object&>(child).addPriorTransformation(transformation);
             }
             else
-                _drawableObjects[this]->setPrimitiveTransformation(primitive);
+                _drawableObjects[this]->addPriorTransformation(transformation);
 
             return *this;
         }
+
+        bool isDrawable() { return (_drawableObjects.find(this) == _drawableObjects.end()) ? false : true; }
 
     private:
         std::unordered_map<Object*, Containers::Pointer<DrawableObject>>& _drawableObjects;

@@ -27,7 +27,7 @@ namespace magnum_dynamics {
         explicit DrawableObject(Object3D& object, SceneGraph::DrawableGroup3D& group, ResourceManager<GL::AbstractShaderProgram>& shadersManager)
             : SceneGraph::Drawable3D{object, &group},
               _shadersManager(shadersManager),
-              _primitiveTransformation(Matrix4()) {}
+              _priorTransformation(Matrix4()) {}
 
         DrawableObject& setMesh(GL::Mesh& mesh);
 
@@ -37,7 +37,7 @@ namespace magnum_dynamics {
 
         DrawableObject& setColor(const Color4& color);
 
-        DrawableObject& setPrimitiveTransformation(const Matrix4& transformation);
+        DrawableObject& addPriorTransformation(const Matrix4& transformation);
 
     private:
         void draw(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera) override;
@@ -57,8 +57,8 @@ namespace magnum_dynamics {
         // Color
         Containers::Optional<Color4> _color;
 
-        // Primitive transformation
-        Matrix4 _primitiveTransformation;
+        // Prior and posterior transformation
+        Matrix4 _priorTransformation;
     };
 } // namespace magnum_dynamics
 

@@ -79,21 +79,19 @@ namespace magnum_dynamics {
     public:
         explicit MagnumApp(const Arguments& arguments);
 
-        ~MagnumApp()
-        {
-            _drawableObjects.clear();
-        }
-
-        // Set importer
-        MagnumApp& setImporter(const std::string& importer);
-
-        // Get Object
-        Object& manipulator();
-
-        SceneGraph::DrawableGroup3D& drawables();
+        ~MagnumApp() { _drawableObjects.clear(); }
 
         // Get number objects
-        size_t numObjects() const;
+        size_t numObjects() const { return _drawableObjects.size(); }
+
+        // Get camera
+        Containers::Pointer<Camera>& camera() { return _camera; }
+
+        // Get manipulator
+        Object& manipulator() { return *_manipulator; }
+
+        // Get drawables
+        SceneGraph::DrawableGroup3D& drawables() { return _drawables; }
 
         // Cartesian frame
         Object3D& addFrame();
@@ -101,34 +99,11 @@ namespace magnum_dynamics {
         // Add primitive
         Object& addPrimitive(const std::string& primitive);
 
-        // Import from file (return object parent of all the objects inside the file)
-        Object& import(const std::string& file);
-
         // To plot a surface basically but it can be more general
         Object& plot(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& fun, const Eigen::MatrixXd& indices, const double& min = -1, const double& max = 1, const std::string& colormap = "turbo");
-        Object& plot(const std::string& file, const Eigen::VectorXd& fun, const std::string& colormap = "turbo");
 
-        // Import multiple files from directory (check how to handle this)
-        // Containers::Array<Object&> import(const std::string& directory, const std::string& extension)
-        // {
-        //     if (Corrade::Utility::Directory::isDirectory(path))
-
-        //     Containers::Array<Object> objects;
-
-        //     for (auto& file : Corrade::Utility::Directory::list(directory)) {
-        //         auto pair = Corrade::Utility::Directory::splitExtension(file);
-        //         if (!extension.compare(pair.second)) {
-        //             arrayAppend(objects, import(Corrade::Utility::Directory::join(directory, file)));
-        //         }
-        //     }
-
-        //     return objects;
-        // }
-
-        Containers::Pointer<Camera>& camera()
-        {
-            return _camera;
-        }
+        // Import from file (return object parent of all the objects inside the file)
+        Object& import(const std::string& file, const std::string& importer = "");
 
     protected:
         // Recursively add objects from meshes
@@ -136,6 +111,8 @@ namespace magnum_dynamics {
             Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
             Containers::ArrayView<Containers::Optional<Trade::PhongMaterialData>> materials,
             Object3D& parent, UnsignedInt i);
+
+        bool transformation2Prior(Object* obj, Matrix4 transformation);
 
         // Draw
         void drawEvent() override;
@@ -152,9 +129,8 @@ namespace magnum_dynamics {
         // Parent object
         Object* _manipulator;
 
-        // Objects
-        std::unordered_map<Object3D*, Containers::Pointer<DrawableObject>> _drawableObjects;
-        std::unordered_map<Object*, Containers::Pointer<DrawableObject>> _drawableObjs;
+        // Unordered map object -> drawable
+        std::unordered_map<Object*, Containers::Pointer<DrawableObject>> _drawableObjects;
 
         // Drawables
         SceneGraph::DrawableGroup3D _drawables;

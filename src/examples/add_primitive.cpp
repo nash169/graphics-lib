@@ -14,14 +14,14 @@ int main(int argc, char** argv)
     MagnumApp app({argc, argv});
 
     app.addPrimitive("cube")
-        .setPrimitiveTransformation(Matrix4())
-        .setTransformation(Matrix4::translation({-2.0f, 0.0f, 0.0f}))
-        .setColor(0xff0000_rgbf);
+        .addPriorTransformation(Matrix4())
+        .setColor(0xff0000_rgbf)
+        .setTransformation(Matrix4::translation({-2.0f, 0.0f, 0.0f}));
 
     app.addPrimitive("cube")
-        .setPrimitiveTransformation(Matrix4::scaling({0.5f, 0.5f, 0.5f}))
-        .setTransformation(Matrix4::translation({2.0f, 0.0f, 0.0f}))
-        .setColor(0x00ff00_rgbf);
+        .addPriorTransformation(Matrix4::scaling({0.5f, 0.5f, 0.5f}))
+        .setColor(0x00ff00_rgbf)
+        .setTransformation(Matrix4::translation({2.0f, 0.0f, 0.0f}));
 
     return app.exec();
 }

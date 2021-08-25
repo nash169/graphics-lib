@@ -31,12 +31,12 @@ namespace magnum_dynamics {
         /* Basic object parent of all the others */
         // arrayAppend(_objects, Containers::optional<Object3D>(&_scene));
         // _manipulator.setParent(&_scene);
-        _manipulator = new Object(&_scene, _drawableObjs); //.setParent(&_scene);
+        _manipulator = new Object(&_scene, _drawableObjects); //.setParent(&_scene);
 
         /* Recall something from OpenGL study but don't precisely */
         GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
         GL::Renderer::enable(GL::Renderer::Feature::FaceCulling);
-        GL::Renderer::setClearColor(0xffffff_rgbf);
+        // GL::Renderer::setClearColor(0xffffff_rgbf);
         // GL::Renderer::enable(GL::Renderer::Feature::PolygonOffsetFill);
         // GL::Renderer::setPolygonOffset(2.0f, 0.5f);
 
@@ -60,51 +60,13 @@ namespace magnum_dynamics {
         _shadersManager.set<GL::AbstractShaderProgram>("vertex", new Shaders::VertexColorGL3D);
 
         // Default importer
-        setImporter("AnySceneImporter");
-
-        // Read main arguments if present and load the scene
-        // if (arguments.argc > 1) {
-        //     Utility::Arguments args;
-        //     args.addArgument("file")
-        //         .setHelp("file", "file to load")
-        //         .addOption("importer", "AnySceneImporter")
-        //         .setHelp("importer", "importer plugin to use")
-        //         .addSkippedPrefix("magnum", "engine-specific options")
-        //         .setGlobalHelp("Displays a 3D scene file provided on command line.")
-        //         .parse(arguments.argc, arguments.argv);
-
-        //     setImporter(args.value("importer")).import(args.value("file"));
-        // }
+        _importer = _manager.loadAndInstantiate("AnySceneImporter");
 
         /* Loop at 60 Hz max */
         setSwapInterval(1);
         setMinimalLoopPeriod(16);
 
         redraw();
-    }
-
-    // Set importer
-    MagnumApp& MagnumApp::setImporter(const std::string& importer)
-    {
-        _importer = _manager.loadAndInstantiate(importer);
-
-        return *this;
-    }
-
-    // Get object
-    Object& MagnumApp::manipulator()
-    {
-        return *_manipulator;
-    }
-
-    SceneGraph::DrawableGroup3D& MagnumApp::drawables()
-    {
-        return _drawables;
-    }
-
-    size_t MagnumApp::numObjects() const
-    {
-        return _drawableObjects.size();
     }
 
     Object3D& MagnumApp::addFrame()
@@ -139,8 +101,8 @@ namespace magnum_dynamics {
         GL::Buffer indices;
         indices.setData(compressed.first);
 
+        // Mesh
         GL::Mesh mesh;
-
         mesh
             .setPrimitive(mesh_data.primitive())
             .setCount(mesh_data.indexCount())
@@ -148,32 +110,10 @@ namespace magnum_dynamics {
                 Shaders::PhongGL::Normal{})
             .setIndexBuffer(std::move(indices), 0, compressed.second);
 
-        // Create 3D object
-        // auto it = _drawableObjects.insert(std::make_pair(new Object3D(&_manipulator), nullptr));
-        auto it = _drawableObjs.insert(std::make_pair(new Object(_manipulator, _drawableObjs), nullptr));
+        // Create object
+        auto it = _drawableObjects.insert(std::make_pair(new Object(_manipulator, _drawableObjects), nullptr));
 
-        // auto* obj = new ObjectCustom(_manipulator);
-
-        // auto obj = new Object(&_manipulator, _drawableObjects);
-
-        // obj->setPrimitiveTransformation(primitive).setTransformation(transformation);
-
-        // auto draw = new DrawableObject(*static_cast<Object3D*>(&obj->object()), _drawables, _shadersManager);
-        // auto draw = new DrawableObject(*obj, _drawables, _shadersManager);
-        // draw->setMesh(mesh).setColor(color);
-
-        // if (it.second) {
-        //     // Set object transformation
-        //     it.first->first->setTransformation(transformation);
-
-        //     // Create drawable
-        //     // *(static_cast<Object3D*>(&(_objects.back()->object())))
-        //     it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
-
-        //     // Set drawable properties
-        //     it.first->second->setMesh(mesh).setColor(color).setPrimitiveTransformation(primitive);
-        // }
-
+        // Add drawable
         if (it.second) {
             // Create drawable
             it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
@@ -185,9 +125,64 @@ namespace magnum_dynamics {
         return *it.first->first;
     }
 
-    // Add from file
-    Object& MagnumApp::import(const std::string& file)
+    // Plot from vertices and indices matrices
+    Object& MagnumApp::plot(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& function, const Eigen::MatrixXd& indices, const double& min, const double& max, const std::string& colormap)
     {
+        // Colormap (this should be set from the outside)
+        auto map = tools::Turbo;
+
+        // Get colors for each value function
+        Eigen::VectorXi vertex2Color = tools::mapColors(function, min, max, 256);
+
+        // Data structure (positions and colors interleaved)
+        struct VertexData {
+            Vector3 position;
+            Color3 color;
+        };
+
+        // Fill data structure
+        Containers::Array<VertexData> data;
+        for (size_t i = 0; i < indices.rows(); i++)
+            for (size_t j = 0; j < indices.cols(); j++) {
+                size_t index = indices(i, j);
+                Eigen::Vector3f vertex = vertices.row(index).cast<float>();
+                arrayAppend(data, Corrade::InPlaceInit, Vector3(vertex),
+                    Color3{map[vertex2Color(index)][0], map[vertex2Color(index)][1], map[vertex2Color(index)][2]});
+            }
+
+        // Create buffer
+        GL::Buffer buffer;
+        buffer.setData(data);
+
+        // Create mesh
+        GL::Mesh mesh;
+        mesh.setCount(data.size())
+            .addVertexBuffer(std::move(buffer), 0,
+                Shaders::VertexColorGL3D::Position{},
+                Shaders::VertexColorGL3D::Color3{});
+
+        // Add object - drawable connection
+        auto it = _drawableObjects.insert(std::make_pair(new Object(_manipulator, _drawableObjects), nullptr));
+
+        // Add drawable
+        if (it.second) {
+            // Create drawable
+            it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
+
+            // Set drawable mesh
+            it.first->second->setMesh(mesh);
+        }
+
+        return *it.first->first;
+    }
+
+    // Add from file
+    Object& MagnumApp::import(const std::string& file, const std::string& importer)
+    {
+        // Set importer
+        if (!importer.empty())
+            _importer = _manager.loadAndInstantiate(importer);
+
         // Check importer
         if (!_importer)
             std::exit(1);
@@ -197,7 +192,7 @@ namespace magnum_dynamics {
         if (!_importer->openFile(file))
             std::exit(4);
 
-        /* TEXTURES */
+        /* Textures */
         Containers::Array<Containers::Optional<GL::Texture2D>> textures{_importer->textureCount()};
 
         for (UnsignedInt i = 0; i != _importer->textureCount(); ++i) {
@@ -235,7 +230,7 @@ namespace magnum_dynamics {
             textures[i] = std::move(texture);
         }
 
-        /* MATERIALS */
+        /* Materials */
         Containers::Array<Containers::Optional<Trade::PhongMaterialData>> materials{_importer->materialCount()};
 
         for (UnsignedInt i = 0; i != _importer->materialCount(); ++i) {
@@ -250,7 +245,7 @@ namespace magnum_dynamics {
             materials[i] = std::move(static_cast<Trade::PhongMaterialData&>(*materialData));
         }
 
-        /* MESHES */
+        /* Meshes */
         Containers::Array<Containers::Optional<GL::Mesh>> meshes{_importer->meshCount()};
 
         for (UnsignedInt i = 0; i != _importer->meshCount(); ++i) {
@@ -276,11 +271,15 @@ namespace magnum_dynamics {
             }
             else {
                 // check how to do this
-                auto ctrObj = new Object(_manipulator, _drawableObjs);
+                auto ctrObj = new Object(_manipulator, _drawableObjects);
 
                 /* Recursively add all children */
                 for (UnsignedInt objectId : sceneData->children3D())
-                    addObject(meshes, textures, materials, *_manipulator, objectId);
+                    addObject(meshes, textures, materials, *ctrObj, objectId);
+
+                /* Set prior transformation  */
+                for (auto& child : ctrObj->children())
+                    transformation2Prior(static_cast<Object*>(&child), ctrObj->transformation());
 
                 return *ctrObj;
             }
@@ -288,7 +287,7 @@ namespace magnum_dynamics {
         /* The format has no scene support, display just the first loaded mesh with a default material and be done with it */
         else if (!meshes.empty() && meshes[0]) {
             // Create 3D object
-            auto it = _drawableObjs.insert(std::make_pair(new Object(_manipulator, _drawableObjs), nullptr));
+            auto it = _drawableObjects.insert(std::make_pair(new Object(_manipulator, _drawableObjects), nullptr));
 
             if (it.second) {
                 // Create drawable
@@ -304,160 +303,12 @@ namespace magnum_dynamics {
         return *_manipulator;
     }
 
-    Object& MagnumApp::plot(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& function, const Eigen::MatrixXd& indices, const double& min, const double& max, const std::string& colormap)
-    {
-        auto map = tools::Turbo;
-        Eigen::VectorXi vertex2Color = tools::mapColors(function, min, max, 256);
-
-        // {
-        //     utils_cpp::Timer timer;
-        //     // Vertices
-        //     Containers::Array<Vector3> nodes;
-
-        //     for (size_t i = 0; i < vertices.rows(); i++) {
-        //         Eigen::Vector3f vertex = vertices.row(i).cast<float>();
-        //         arrayAppend(nodes, Corrade::InPlaceInit, Vector3(vertex));
-        //     }
-        //     Containers::StridedArrayView1D<const Vector3> indexedPositions = nodes;
-
-        //     // Indices
-        //     Containers::Array<UnsignedInt> id;
-        //     for (size_t i = 0; i < indices.rows(); i++)
-        //         for (size_t j = 0; j < indices.cols(); j++)
-        //             arrayAppend(id, Corrade::InPlaceInit, UnsignedInt(indices(i, j)));
-        //     Containers::StridedArrayView1D<const UnsignedInt> idx = id;
-
-        //     // Colors
-        //     Containers::Array<Color3> col;
-
-        //     for (size_t i = 0; i < vertex2Color.rows(); i++)
-        //         arrayAppend(col, Corrade::InPlaceInit, Color3{map[vertex2Color(i)][0], map[vertex2Color(i)][1], map[vertex2Color(i)][2]});
-        //     Containers::StridedArrayView1D<const Color3> indexedColors = col;
-
-        //     Containers::Array<Vector3> vtx = MeshTools::duplicate(idx, indexedPositions);
-        //     GL::Buffer interleaved_nodes;
-        //     interleaved_nodes.setData(MeshTools::interleave(MeshTools::duplicate(idx, indexedPositions), MeshTools::duplicate(idx, indexedColors)), GL::BufferUsage::StaticDraw);
-        // }
-
-        struct VertexData {
-            Vector3 position;
-            Color3 color;
-        };
-
-        Containers::Array<VertexData> data;
-
-        /* Plot the loaded mesh */
-
-        for (size_t i = 0; i < indices.rows(); i++)
-            for (size_t j = 0; j < indices.cols(); j++) {
-                size_t index = indices(i, j);
-                Eigen::Vector3f vertex = vertices.row(index).cast<float>();
-                arrayAppend(data, Corrade::InPlaceInit, Vector3(vertex),
-                    Color3{map[vertex2Color(index)][0], map[vertex2Color(index)][1], map[vertex2Color(index)][2]});
-            }
-
-        GL::Buffer buffer;
-        buffer.setData(data);
-
-        GL::Mesh mesh;
-        mesh.setCount(data.size())
-            .addVertexBuffer(std::move(buffer), 0,
-                Shaders::VertexColorGL3D::Position{},
-                Shaders::VertexColorGL3D::Color3{});
-
-        auto it = _drawableObjs.insert(std::make_pair(new Object(_manipulator, _drawableObjs), nullptr));
-
-        if (it.second) {
-            // Create drawable
-            it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
-
-            // Set drawable mesh
-            it.first->second->setMesh(mesh);
-        }
-
-        return *it.first->first;
-    }
-
-    Object& MagnumApp::plot(const std::string& file, const Eigen::VectorXd& x, const std::string& colormap)
-    {
-        setImporter("AssimpImporter");
-        // _importer->configuration()
-
-        // Check importer
-        if (!_importer)
-            std::exit(1);
-
-        // Import file
-        Debug{} << "Opening file" << file;
-        if (!_importer->openFile(file))
-            std::exit(4);
-
-        if (_importer->meshCount() != 1) {
-            Warning{} << "Cannot plot, zero or multiple meshes present";
-            return *_manipulator;
-        }
-
-        Debug{} << "Importing mesh" << 0 << _importer->meshName(0);
-
-        Containers::Optional<Trade::MeshData> meshData = _importer->mesh(0);
-
-        if (!meshData || meshData->primitive() != MeshPrimitive::Triangles) {
-            Warning{} << "Cannot load the mesh, skipping";
-        }
-        else {
-            auto map = tools::Turbo;
-
-            struct VertexData {
-                Vector3 position;
-                Color3 color;
-            };
-
-            Containers::Array<VertexData> data;
-
-            /* Plot the loaded mesh */
-            Eigen::VectorXi vertex2Color = tools::mapColors(x, x.minCoeff(), x.maxCoeff(), 256);
-            for (auto& i : meshData->indicesAsArray())
-                arrayAppend(data, Corrade::InPlaceInit, meshData->positions3DAsArray()[i], Color3{map[vertex2Color(i)][0], map[vertex2Color(i)][1], map[vertex2Color(i)][2]});
-
-            /* Plot the cube */
-            // Trade::MeshData cube_mesh = Primitives::cubeSolid();
-            // Eigen::VectorXd val = Eigen::VectorXd::Random(24);
-            // Eigen::VectorXi vertex2Color = tools::mapColors(val, val.minCoeff(), val.maxCoeff(), 256);
-            // for (auto& i : cube_mesh.indicesAsArray())
-            //     arrayAppend(data, Containers::InPlaceInit, cube_mesh.positions3DAsArray()[i], Color3{map[vertex2Color(i)][0], map[vertex2Color(i)][1], map[vertex2Color(i)][2]});
-
-            GL::Buffer buffer;
-            buffer.setData(data);
-
-            GL::Mesh mesh;
-            mesh.setPrimitive(MeshPrimitive::Triangles)
-                .setCount(data.size())
-                .addVertexBuffer(std::move(buffer), 0,
-                    Shaders::VertexColorGL3D::Position{},
-                    Shaders::VertexColorGL3D::Color3{});
-
-            auto it = _drawableObjs.insert(std::make_pair(new Object(_manipulator, _drawableObjs), nullptr));
-
-            if (it.second) {
-                // Create drawable
-                it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
-
-                // Set drawable mesh
-                it.first->second->setMesh(mesh);
-            }
-
-            return *it.first->first;
-        }
-
-        return *_manipulator;
-    }
-
     void MagnumApp::addObject(Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
         Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
         Containers::ArrayView<Containers::Optional<Trade::PhongMaterialData>> materials,
         Object3D& parent, UnsignedInt i)
     {
-        // Import the object information
+        /* Import the object information */
         Debug{} << "Importing object" << i << _importer->object3DName(i);
         Containers::Pointer<Trade::ObjectData3D> objectData = _importer->object3D(i);
         if (!objectData) {
@@ -465,15 +316,20 @@ namespace magnum_dynamics {
             return;
         }
 
-        // Create 3D object
-        auto it = _drawableObjects.insert(std::make_pair(new Object(&parent, _drawableObjs), nullptr));
+        /* Create 3D object */
+        auto object = new Object(&parent, _drawableObjects);
 
-        if (it.second) {
-            // Set object transformation
-            it.first->first->setTransformation(objectData->transformation());
+        /* Object transformation */
+        // Debug{} << objectData->transformation();
+        object->setTransformation(objectData->transformation());
+        // object->addPriorTransformation(objectData->transformation());
 
-            /* Add a drawable if the object has a mesh and the mesh is loaded */
-            if (objectData->instanceType() == Trade::ObjectInstanceType3D::Mesh && objectData->instance() != -1 && meshes[objectData->instance()]) {
+        /* Add a drawable if the object has a mesh and the mesh is loaded */
+        if (objectData->instanceType() == Trade::ObjectInstanceType3D::Mesh && objectData->instance() != -1 && meshes[objectData->instance()]) {
+            // Add object to the unordered map
+            auto it = _drawableObjects.insert(std::make_pair(object, nullptr));
+
+            if (it.second) {
                 const Int materialId = static_cast<Trade::MeshObjectData3D*>(objectData.get())->material();
 
                 /* Material not available / not loaded, use a default material */
@@ -490,15 +346,12 @@ namespace magnum_dynamics {
 
                     it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
 
-                    it.first->second
-                        ->setMesh(*meshes[objectData->instance()]);
+                    it.first->second->setMesh(*meshes[objectData->instance()]);
 
                     if (texture)
-                        it.first->second
-                            ->setTexture(*texture);
+                        it.first->second->setTexture(*texture);
                     else
-                        it.first->second
-                            ->setColor(0xffffff_rgbf);
+                        it.first->second->setColor(0xffffff_rgbf);
                 }
                 /* Not textured material */
                 else {
@@ -506,15 +359,34 @@ namespace magnum_dynamics {
 
                     it.first->second
                         ->setMesh(*meshes[objectData->instance()])
-                        .setMaterial(*materials[materialId])
+                        // .setMaterial(*materials[materialId]) // correct here (check with reference example)
                         .setColor(materials[materialId]->diffuseColor()); // set color by default but it should not be used
                 }
             }
-
-            /* Recursively add children */
-            for (std::size_t id : objectData->children())
-                addObject(meshes, textures, materials, *it.first->first, id);
         }
+
+        /* Recursively add children */
+        for (std::size_t id : objectData->children())
+            addObject(meshes, textures, materials, *object, id);
+    }
+
+    bool MagnumApp::transformation2Prior(Object* obj, Matrix4 transformation)
+    {
+        // Transformation
+        transformation = transformation * obj->transformation();
+
+        // Set prior transformation for the (drawable feature)
+        for (auto& feature : obj->features())
+            static_cast<DrawableObject&>(feature).addPriorTransformation(transformation);
+
+        // Reset tranformation
+        obj->resetTransformation();
+
+        // Recursion
+        for (auto& child : obj->children())
+            transformation2Prior(static_cast<Object*>(&child), transformation);
+
+        return true;
     }
 
     void MagnumApp::drawEvent()
@@ -546,22 +418,6 @@ namespace magnum_dynamics {
             _previousPosition = Vector3();
     }
 
-    // void MagnumApp::mouseScrollEvent(MouseScrollEvent& event)
-    // {
-    //     if (!event.offset().y())
-    //         return;
-
-    //     // Vector3 center = {29.538, 38.7425, 25.2313};
-
-    //     /* Distance to origin */
-    //     const Vector3 distance = (*_camera->object()).transformation().translation();
-
-    //     /* Move 15% of the distance back or forward */
-    //     (*_camera->object()).translate(distance * (1.0f - (event.offset().y() > 0 ? 1 / 0.85f : 0.85f)));
-
-    //     redraw();
-    // }
-
     void MagnumApp::mouseScrollEvent(MouseScrollEvent& event)
     {
         if (event.offset().y())
@@ -569,23 +425,6 @@ namespace magnum_dynamics {
 
         redraw();
     }
-
-    // void MagnumApp::mouseMoveEvent(MouseMoveEvent& event)
-    // {
-    //     if (!(event.buttons() & MouseMoveEvent::Button::Left))
-    //         return;
-
-    //     const Vector3 currentPosition = positionOnSphere(event.position());
-    //     const Vector3 axis = Math::cross(_previousPosition, currentPosition);
-
-    //     if (_previousPosition.length() < 0.001f || axis.length() < 0.001f)
-    //         return;
-
-    //     _manipulator->rotate(Math::angle(_previousPosition, currentPosition), axis.normalized());
-    //     _previousPosition = currentPosition;
-
-    //     redraw();
-    // }
 
     void MagnumApp::mouseMoveEvent(MouseMoveEvent& event)
     {
@@ -604,3 +443,77 @@ namespace magnum_dynamics {
         return (result * Vector3::yScale(-1.0f)).normalized();
     }
 } // namespace magnum_dynamics
+
+// Object& MagnumApp::plot(const std::string& file, const Eigen::VectorXd& x, const std::string& colormap)
+//     {
+//         setImporter("AssimpImporter");
+//         // _importer->configuration()
+
+//         // Check importer
+//         if (!_importer)
+//             std::exit(1);
+
+//         // Import file
+//         Debug{} << "Opening file" << file;
+//         if (!_importer->openFile(file))
+//             std::exit(4);
+
+//         if (_importer->meshCount() != 1) {
+//             Warning{} << "Cannot plot, zero or multiple meshes present";
+//             return *_manipulator;
+//         }
+
+//         Debug{} << "Importing mesh" << 0 << _importer->meshName(0);
+
+//         Containers::Optional<Trade::MeshData> meshData = _importer->mesh(0);
+
+//         if (!meshData || meshData->primitive() != MeshPrimitive::Triangles) {
+//             Warning{} << "Cannot load the mesh, skipping";
+//         }
+//         else {
+//             auto map = tools::Turbo;
+
+//             struct VertexData {
+//                 Vector3 position;
+//                 Color3 color;
+//             };
+
+//             Containers::Array<VertexData> data;
+
+//             /* Plot the loaded mesh */
+//             Eigen::VectorXi vertex2Color = tools::mapColors(x, x.minCoeff(), x.maxCoeff(), 256);
+//             for (auto& i : meshData->indicesAsArray())
+//                 arrayAppend(data, Corrade::InPlaceInit, meshData->positions3DAsArray()[i], Color3{map[vertex2Color(i)][0], map[vertex2Color(i)][1], map[vertex2Color(i)][2]});
+
+//             /* Plot the cube */
+//             // Trade::MeshData cube_mesh = Primitives::cubeSolid();
+//             // Eigen::VectorXd val = Eigen::VectorXd::Random(24);
+//             // Eigen::VectorXi vertex2Color = tools::mapColors(val, val.minCoeff(), val.maxCoeff(), 256);
+//             // for (auto& i : cube_mesh.indicesAsArray())
+//             //     arrayAppend(data, Containers::InPlaceInit, cube_mesh.positions3DAsArray()[i], Color3{map[vertex2Color(i)][0], map[vertex2Color(i)][1], map[vertex2Color(i)][2]});
+
+//             GL::Buffer buffer;
+//             buffer.setData(data);
+
+//             GL::Mesh mesh;
+//             mesh.setPrimitive(MeshPrimitive::Triangles)
+//                 .setCount(data.size())
+//                 .addVertexBuffer(std::move(buffer), 0,
+//                     Shaders::VertexColorGL3D::Position{},
+//                     Shaders::VertexColorGL3D::Color3{});
+
+//             auto it = _drawableObjs.insert(std::make_pair(new Object(_manipulator, _drawableObjs), nullptr));
+
+//             if (it.second) {
+//                 // Create drawable
+//                 it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
+
+//                 // Set drawable mesh
+//                 it.first->second->setMesh(mesh);
+//             }
+
+//             return *it.first->first;
+//         }
+
+//         return *_manipulator;
+//     }

@@ -27,16 +27,17 @@ namespace magnum_dynamics {
         return *this;
     }
 
-    DrawableObject& DrawableObject::setPrimitiveTransformation(const Matrix4& transformation)
+    DrawableObject& DrawableObject::addPriorTransformation(const Matrix4& transformation)
     {
-        _primitiveTransformation = std::move(transformation);
+        // Debug{} << transformation;
+        _priorTransformation = transformation * _priorTransformation;
 
         return *this;
     }
 
     void DrawableObject::draw(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera)
     {
-        Matrix4 transformation = transformationMatrix * _primitiveTransformation;
+        Matrix4 transformation = transformationMatrix * _priorTransformation;
 
         // If texture is present use texture shader (Phong::Flag::DiffuseTexture)
         if (_texture)
