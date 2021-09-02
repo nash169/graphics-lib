@@ -7,3 +7,4 @@ This is a small wrapper around magnum graphics to easily load/create objects and
 - Fix draw when material is present
 - Fix set of mesh, color, material etc
 - Remove debug messages
+- Fix vertical rotation (problem when camera not in y=0, it keeps rotating about old y)
