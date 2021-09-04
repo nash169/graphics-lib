@@ -86,10 +86,17 @@ namespace magnum_dynamics {
     // Add primitive
     Object& MagnumApp::addPrimitive(const std::string& primitive)
     {
+        // Default mesh cube
         Trade::MeshData mesh_data = Primitives::cubeSolid();
 
         if (!primitive.compare("sphere"))
-            mesh_data = Primitives::cubeSolid();
+            mesh_data = Primitives::icosphereSolid(3);
+        else if (!primitive.compare("capsule"))
+            mesh_data = Primitives::capsule3DSolid(10, 10, 30, 0.5);
+        else if (!primitive.compare("cone"))
+            mesh_data = Primitives::coneSolid(10, 30, 1);
+        else if (!primitive.compare("cylinder"))
+            mesh_data = Primitives::cylinderSolid(10, 30, 1);
 
         // Vertices
         GL::Buffer vertices;

@@ -35,7 +35,10 @@
 #include <Magnum/Platform/Sdl2Application.h>
 
 #include <Magnum/Primitives/Axis.h>
+#include <Magnum/Primitives/Capsule.h>
+#include <Magnum/Primitives/Cone.h>
 #include <Magnum/Primitives/Cube.h>
+#include <Magnum/Primitives/Cylinder.h>
 #include <Magnum/Primitives/Icosphere.h>
 
 #include <Magnum/SceneGraph/Camera.h>
