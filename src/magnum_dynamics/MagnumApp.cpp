@@ -94,9 +94,9 @@ namespace magnum_dynamics {
         else if (!primitive.compare("capsule"))
             mesh_data = Primitives::capsule3DSolid(10, 10, 30, 0.5);
         else if (!primitive.compare("cone"))
-            mesh_data = Primitives::coneSolid(10, 30, 1);
+            mesh_data = Primitives::coneSolid(10, 30, 1, Primitives::ConeFlag::CapEnd);
         else if (!primitive.compare("cylinder"))
-            mesh_data = Primitives::cylinderSolid(10, 30, 1);
+            mesh_data = Primitives::cylinderSolid(10, 30, 1, Primitives::CylinderFlag::CapEnds);
 
         // Vertices
         GL::Buffer vertices;
