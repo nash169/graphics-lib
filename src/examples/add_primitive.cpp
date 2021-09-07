@@ -1,11 +1,12 @@
 #include <iostream>
 
 #include <magnum_dynamics/MagnumApp.hpp>
-#include <magnum_dynamics/Object.hpp>
+// #include <magnum_dynamics/Object.hpp>
 
-#include <Magnum/DebugTools/ColorMap.h>
-#include <Magnum/DebugTools/ObjectRenderer.h>
-#include <Magnum/DebugTools/ResourceManager.h>
+// #include <Magnum/DebugTools/ColorMap.h>
+// #include <Magnum/DebugTools/ObjectRenderer.h>
+// #include <Magnum/DebugTools/ResourceManager.h>
+#include <magnum_dynamics/tools/helper.hpp>
 
 using namespace magnum_dynamics;
 
