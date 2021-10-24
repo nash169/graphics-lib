@@ -13,7 +13,9 @@ int main(int argc, char** argv)
 {
     MagnumApp app({argc, argv});
 
-    app.import("rsc/franka/link5.dae"); //.setTransformation(Matrix4()); //.setPrimitiveTransformation(Matrix4::scaling(Vector3(4, 4, 4)));
+    std::string fname = (argc > 1) ? argv[1] : "rsc/franka/link.dae";
+
+    app.import(fname); //.setTransformation(Matrix4()); //.setPrimitiveTransformation(Matrix4::scaling(Vector3(4, 4, 4)));
     // app.import("rsc/iiwa/link_0.stl");
 
     app.addFrame()
