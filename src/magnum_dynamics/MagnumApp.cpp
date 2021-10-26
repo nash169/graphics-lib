@@ -6,8 +6,6 @@
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Magnum/MeshTools/Duplicate.h>
 
-#include <utils_cpp/UtilsCpp.hpp>
-
 namespace magnum_dynamics {
     MagnumApp::MagnumApp(const Arguments& arguments)
         : Platform::Application{arguments, NoCreate}
