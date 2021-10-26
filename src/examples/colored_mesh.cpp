@@ -1,6 +1,6 @@
 #include <Eigen/Core>
 #include <iostream>
-#include <utils_cpp/UtilsCpp.hpp>
+#include <utils_cpp/FileManager.hpp>
 
 #include <magnum_dynamics/MagnumApp.hpp>
 
