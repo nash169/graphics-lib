@@ -15,7 +15,9 @@ int main(int argc, char** argv)
 
     Eigen::VectorXd fun = Eigen::VectorXd::Random(vertices.rows());
 
-    app.surf(vertices.block(0, 1, vertices.rows(), 3), fun, indices.block(0, 5, indices.rows(), 3))
+    app
+        .setBackground("white")
+        .surf(vertices.block(0, 1, vertices.rows(), 3), fun, indices.block(0, 5, indices.rows(), 3))
         .setTransformation(Matrix4::scaling({0.05, 0.05, 0.05}));
 
     return app.exec();

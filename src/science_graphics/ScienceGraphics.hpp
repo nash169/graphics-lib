@@ -76,6 +76,9 @@ namespace science_graphics {
         // Get number objects
         size_t numObjects() const { return _drawables3D.size() + _drawables2D.size(); }
 
+        // Set window background
+        ScienceGraphics& setBackground(const std::string& colorname);
+
         // Cartesian frame
         objects::ObjectHandle3D& addFrame();
 

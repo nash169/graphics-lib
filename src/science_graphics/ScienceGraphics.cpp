@@ -104,6 +104,11 @@ namespace science_graphics {
 
         redraw();
     }
+    ScienceGraphics& ScienceGraphics::setBackground(const std::string& colorname)
+    {
+        GL::Renderer::setClearColor(tools::color(colorname));
+        return *this;
+    }
 
     objects::ObjectHandle3D& ScienceGraphics::addFrame()
     {
