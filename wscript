@@ -69,16 +69,15 @@ def configure(cfg):
 
 def build(bld):
     # Library name
-    bld.get_env()["libname"] = "MagnumDynamics"
+    bld.get_env()["libname"] = "ScienceGraphics"
 
     # Includes
     includes = []
     includes_path = "src"
-    for root, dirnames, filenames in os.walk(
-        osp.join(bld.path.abspath(), includes_path)
-    ):
-        for filename in fnmatch.filter(filenames, "*.hpp"):
-            includes.append(os.path.join(root, filename))
+    for root, _, filenames in os.walk(osp.join(bld.path.abspath(), includes_path)):
+        for filename in filenames:
+            if filename.endswith(('.hpp', '.h')):
+                includes.append(os.path.join(root, filename))
     includes = [f[len(bld.path.abspath()) + 1:] for f in includes]
 
     # Sources

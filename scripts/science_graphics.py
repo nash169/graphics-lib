@@ -29,11 +29,11 @@ def check_science_graphics(ctx):
     # science-graphics includes
     check_include(
         ctx, "SCIENCEGRAPHICS", [""], [
-            "science_graphics/MagnumApp.hpp"], path_check
+            "science_graphics/ScienceGraphics.hpp"], path_check
     )
 
     # science-graphics libs
-    check_lib(ctx, "SCIENCEGRAPHICS", "", ["libSCIENCEGRAPHICS"], path_check)
+    check_lib(ctx, "SCIENCEGRAPHICS", "", ["libScienceGraphics"], path_check)
 
     if ctx.env.LIB_SCIENCEGRAPHICS or ctx.env.STLIB_SCIENCEGRAPHICS:
         # Add dependencies to require libraries
@@ -42,7 +42,7 @@ def check_science_graphics(ctx):
 
         # Check for dependencies
         ctx.options.magnum_components = (
-            "Sdl2Application,Primitives,Shaders,MeshTools,SceneGraph,Trade,GL"
+            "Sdl2Application,Primitives,Shaders,MeshTools,SceneGraph,Trade,GL,DebugTools"
         )
         ctx.options.magnum_integrations = "Eigen,Bullet"
 
