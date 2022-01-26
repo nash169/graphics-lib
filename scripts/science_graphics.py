@@ -11,31 +11,31 @@ def options(opt):
 
     # Options
     opt.add_option(
-        "--magnum_dynamics-path",
+        "--science_graphics-path",
         type="string",
-        help="path to magnum-dynamics",
-        dest="magnum_dynamics_path",
+        help="path to science-graphics",
+        dest="science_graphics_path",
     )
 
 
 @conf
-def check_magnum_dynamics(ctx):
+def check_science_graphics(ctx):
     # Set the search path
-    if ctx.options.magnum_dynamics_path is None:
+    if ctx.options.science_graphics_path is None:
         path_check = ["/usr/local", "/usr"]
     else:
-        path_check = [ctx.options.magnum_dynamics_path]
+        path_check = [ctx.options.science_graphics_path]
 
-    # magnum-dynamics includes
+    # science-graphics includes
     check_include(
-        ctx, "MAGNUMDYNAMICS", [""], [
-            "magnum_dynamics/MagnumApp.hpp"], path_check
+        ctx, "SCIENCEGRAPHICS", [""], [
+            "science_graphics/MagnumApp.hpp"], path_check
     )
 
-    # magnum-dynamics libs
-    check_lib(ctx, "MAGNUMDYNAMICS", "", ["libMagnumDynamics"], path_check)
+    # science-graphics libs
+    check_lib(ctx, "SCIENCEGRAPHICS", "", ["libSCIENCEGRAPHICS"], path_check)
 
-    if ctx.env.LIB_MAGNUMDYNAMICS or ctx.env.STLIB_MAGNUMDYNAMICS:
+    if ctx.env.LIB_SCIENCEGRAPHICS or ctx.env.STLIB_SCIENCEGRAPHICS:
         # Add dependencies to require libraries
         ctx.get_env()["requires"] = ctx.get_env()[
             "requires"] + ["EIGEN", "MAGNUM"]
@@ -49,12 +49,12 @@ def check_magnum_dynamics(ctx):
         ctx.load("eigen magnum", tooldir="waf_tools")
 
         # Add useful define to dynamically activate the graphics
-        ctx.env.DEFINES_MAGNUMDYNAMICS += ["GRAPHICS"]
+        ctx.env.DEFINES_SCIENCEGRAPHICS += ["GRAPHICS"]
 
         # Add library
-        ctx.get_env()["libs"] = ctx.get_env()["libs"] + ["MAGNUMDYNAMICS"]
+        ctx.get_env()["libs"] = ctx.get_env()["libs"] + ["SCIENCEGRAPHICS"]
 
 
 def configure(cfg):
-    if not cfg.env.LIB_MAGNUMDYNAMICS and not cfg.env.STLIB_MAGNUMDYNAMICS:
-        cfg.check_magnum_dynamics()
+    if not cfg.env.LIB_SCIENCEGRAPHICS and not cfg.env.STLIB_SCIENCEGRAPHICS:
+        cfg.check_science_graphics()

@@ -1,17 +1,10 @@
-#ifndef MAGNUM_DYNAMICS_TOOLS_HELPER_HPP
-#define MAGNUM_DYNAMICS_TOOLS_HELPER_HPP
+#ifndef SCIENCEGRAPHICS_TOOLS_HELPER_HPP
+#define SCIENCEGRAPHICS_TOOLS_HELPER_HPP
 
-#include <Magnum/Magnum.h>
-#include <Magnum/Math/Color.h>
-#include <iostream>
-#include <string>
-
-namespace magnum_dynamics {
+namespace science_graphics {
     namespace tools {
-        using namespace Magnum;
-        using namespace Math::Literals;
-
-        Color4 color(const std::string& color)
+        // Get colors
+        inline Color4 color(const std::string& color)
         {
             if (!color.compare("red"))
                 return Color4::red();
@@ -37,6 +30,6 @@ namespace magnum_dynamics {
             }
         }
     } // namespace tools
-} // namespace magnum_dynamics
+} // namespace science_graphics
 
-#endif // MAGNUM_DYNAMICS_TOOLS_HELPER_HPP
+#endif // SCIENCEGRAPHICS_TOOLS_HELPER_HPP

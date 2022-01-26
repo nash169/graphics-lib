@@ -6,7 +6,7 @@ import os.path as osp
 import fnmatch
 
 VERSION = "1.0.0"
-APPNAME = "magnum-dynamics"
+APPNAME = "science-graphics"
 
 srcdir = "."
 blddir = "build"
@@ -83,7 +83,7 @@ def build(bld):
 
     # Sources
     sources = []
-    sources_path = "src/magnum_dynamics"
+    sources_path = "src/science_graphics"
     for root, dirnames, filenames in os.walk(
         osp.join(bld.path.abspath(), sources_path)
     ):
@@ -133,5 +133,5 @@ def build(bld):
         )
 
     # Install tools
-    bld.install_files("${PREFIX}/share/waf", "scripts/magnum_dynamics.py")
+    bld.install_files("${PREFIX}/share/waf", "scripts/science_graphics.py")
     bld.install_files("${PREFIX}/share/waf", "waf_tools/utils.py")

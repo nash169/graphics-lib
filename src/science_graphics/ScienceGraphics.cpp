@@ -1,20 +1,60 @@
-#include "magnum_dynamics/MagnumApp.hpp"
+#include "science_graphics/ScienceGraphics.hpp"
 
-#include "magnum_dynamics/tools/colormaps.hpp"
-#include "magnum_dynamics/tools/math.hpp"
+/* PRIMITIVES */
+#include <Magnum/Primitives/Axis.h>
+#include <Magnum/Primitives/Capsule.h>
+#include <Magnum/Primitives/Cone.h>
+#include <Magnum/Primitives/Cube.h>
+#include <Magnum/Primitives/Cylinder.h>
+#include <Magnum/Primitives/Gradient.h>
+#include <Magnum/Primitives/Icosphere.h>
 
-#include <Corrade/Containers/StridedArrayView.h>
-#include <Magnum/MeshTools/Duplicate.h>
+/* MATH */
+#include "science_graphics/tools/math.hpp"
 
-namespace magnum_dynamics {
-    MagnumApp::MagnumApp(const Arguments& arguments)
+/* COLORMAPS */
+#include <Magnum/DebugTools/ColorMap.h>
+
+/* SHADERS */
+#include <Magnum/Shaders/Phong.h>
+#include <Magnum/Shaders/VertexColorGL.h>
+
+/* IMPORTERS */
+#include <MagnumPlugins/AssimpImporter/AssimpImporter.h>
+
+/* DEBUGGER TOOLS */
+#include <Corrade/Utility/DebugStl.h>
+
+/* GL TOOLS */
+#include <Magnum/GL/Buffer.h>
+#include <Magnum/GL/Renderer.h>
+#include <Magnum/GL/TextureFormat.h>
+
+/* MESH TOOLS*/
+#include <Magnum/MeshTools/Compile.h>
+#include <Magnum/MeshTools/CompressIndices.h>
+#include <Magnum/MeshTools/Interleave.h>
+
+/* MAGNUM MAIN */
+#include <Magnum/ImageView.h>
+#include <Magnum/PixelFormat.h>
+
+/* TRADE TOOLS */
+#include <Magnum/Trade/ImageData.h>
+#include <Magnum/Trade/MeshData.h>
+#include <Magnum/Trade/MeshObjectData3D.h>
+#include <Magnum/Trade/SceneData.h>
+#include <Magnum/Trade/TextureData.h>
+
+namespace science_graphics {
+    ScienceGraphics::ScienceGraphics(const Arguments& arguments)
         : Platform::Application{arguments, NoCreate}
     {
         /* Try 8x MSAA, fall back to zero samples if not possible. Enable only 2x MSAA if we have enough DPI. */
         {
             const Vector2 dpiScaling = this->dpiScaling({});
             Configuration conf;
-            conf.setTitle("Magnum Dynamics")
+            conf.setTitle("Science Graphics")
                 // .setSize(conf.size(), dpiScaling)
                 .setWindowFlags(Configuration::WindowFlag::Resizable);
             GLConfiguration glConf;
@@ -23,13 +63,12 @@ namespace magnum_dynamics {
                 create(conf, glConf.setSampleCount(0));
         }
 
-        /* Create camera */
-        _camera.reset(new Camera(_scene));
+        /* Create cameras */
+        _cameraTemp2D.reset(new cameras::CameraHandle2D(_scene2D));
+        _cameraTemp3D.reset(new cameras::CameraHandle3D(_scene3D));
 
         /* Basic object parent of all the others */
-        // arrayAppend(_objects, Containers::optional<Object3D>(&_scene));
-        // _manipulator.setParent(&_scene);
-        _manipulator = new Object(&_scene, _drawableObjects); //.setParent(&_scene);
+        _manipulator = new objects::ObjectHandle3D(&_scene3D, _drawables3D);
 
         /* Recall something from OpenGL study but don't precisely */
         GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
@@ -38,24 +77,23 @@ namespace magnum_dynamics {
         // GL::Renderer::enable(GL::Renderer::Feature::PolygonOffsetFill);
         // GL::Renderer::setPolygonOffset(2.0f, 0.5f);
 
-        // Set colored shader
-        _shadersManager.set<GL::AbstractShaderProgram>("color", new Shaders::PhongGL{{}, 2});
-
-        _shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("color")
+        // Phong shader
+        _shadersManager.set<GL::AbstractShaderProgram>("phong", new Shaders::PhongGL{{}, 2});
+        _shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("phong")
             ->setAmbientColor(0x111111_rgbf)
             .setSpecularColor(0xffffff_rgbf)
             .setShininess(80.0f);
 
-        // Set texture shader
+        // Texture shader
         _shadersManager.set<GL::AbstractShaderProgram>("texture", new Shaders::PhongGL(Shaders::PhongGL::Flag::DiffuseTexture, 2));
-
         _shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("texture")
             ->setAmbientColor(0x111111_rgbf)
             .setSpecularColor(0x111111_rgbf)
             .setShininess(80.0f);
 
-        // Set vertex shader
-        _shadersManager.set<GL::AbstractShaderProgram>("vertex", new Shaders::VertexColorGL3D);
+        // Color shader (2D/3D)
+        _shadersManager.set<GL::AbstractShaderProgram>("color3D", new Shaders::VertexColorGL3D);
+        _shadersManager.set<GL::AbstractShaderProgram>("color2D", new Shaders::VertexColorGL2D);
 
         // Default importer
         _importer = _manager.loadAndInstantiate("AnySceneImporter");
@@ -67,22 +105,29 @@ namespace magnum_dynamics {
         redraw();
     }
 
-    Object3D& MagnumApp::addFrame()
+    objects::ObjectHandle3D& ScienceGraphics::addFrame()
     {
         auto axis_mesh = Primitives::axis3D();
 
         GL::Mesh mesh = MeshTools::compile(axis_mesh);
 
-        auto* obj = new Object3D(_manipulator);
+        // Create object
+        auto it = _drawables3D.insert(std::make_pair(new objects::ObjectHandle3D(_manipulator, _drawables3D), nullptr));
 
-        auto* drwObj = new DrawableObject(*obj, _drawables, _shadersManager);
-        drwObj->setMesh(mesh);
+        // Add drawable
+        if (it.second) {
+            // Create drawable
+            it.first->second = Containers::pointer<drawables::ColorDrawable3D>(*it.first->first, _color3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::VertexColorGL3D>("color3D"));
 
-        return *obj;
+            // Set drawable mesh
+            it.first->second->setMesh(mesh);
+        }
+
+        return *it.first->first;
     }
 
     // Add primitive
-    Object& MagnumApp::addPrimitive(const std::string& primitive)
+    objects::ObjectHandle3D& ScienceGraphics::addPrimitive(const std::string& primitive)
     {
         // Default mesh cube
         Trade::MeshData mesh_data = Primitives::cubeSolid();
@@ -116,28 +161,80 @@ namespace magnum_dynamics {
             .setIndexBuffer(std::move(indices), 0, compressed.second);
 
         // Create object
-        auto it = _drawableObjects.insert(std::make_pair(new Object(_manipulator, _drawableObjects), nullptr));
+        auto it = _drawables3D.insert(std::make_pair(new objects::ObjectHandle3D(_manipulator, _drawables3D), nullptr));
 
         // Add drawable
         if (it.second) {
             // Create drawable
-            it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
+            it.first->second = Containers::pointer<drawables::PhongDrawable3D>(*it.first->first, _phong3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("phong"));
 
             // Set drawable mesh and default color
-            it.first->second->setMesh(mesh).setColor(0xffffff_rgbf);
+            static_cast<drawables::PhongDrawable3D&>(it.first->second->setMesh(mesh)).setColor(0xffffff_rgbf);
+        }
+
+        return *it.first->first;
+    }
+
+    objects::ObjectHandle2D& ScienceGraphics::colorbar(const double& min, const double& max, const std::string& colorset)
+    {
+        // Map
+        const auto map = colormap(colorset);
+
+        // Ticks
+        Eigen::Matrix<double, 10, 1> ticks = Eigen::VectorXd::LinSpaced(10, min, max);
+
+        // Colors
+        Eigen::Matrix<int, 10, 1> colors_index = Eigen::VectorXi::LinSpaced(10, 0, 255);
+
+        // Vertices
+        struct VertexData {
+            Vector2 position;
+            Color3 color;
+        };
+
+        Containers::Array<VertexData> vertices;
+        for (size_t i = 0; i < 9; i++) {
+            // lower triangle
+            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{0, float(i) - 1}, Color3::fromSrgb(map[colors_index[i]]));
+            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{1, float(i) - 1}, Color3::fromSrgb(map[colors_index[i]]));
+            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{1, float(i + 1) - 1}, Color3::fromSrgb(map[colors_index[i + 1]]));
+
+            // upper triangle
+            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{0, float(i) - 1}, Color3::fromSrgb(map[colors_index[i]]));
+            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{1, float(i + 1) - 1}, Color3::fromSrgb(map[colors_index[i + 1]]));
+            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{0, float(i + 1) - 1}, Color3::fromSrgb(map[colors_index[i + 1]]));
+        }
+
+        // Mesh
+        GL::Mesh mesh;
+        mesh.setCount(Containers::arraySize(vertices))
+            .addVertexBuffer(GL::Buffer{vertices}, 0,
+                Shaders::VertexColorGL2D::Position{},
+                Shaders::VertexColorGL2D::Color3{});
+
+        // Object and drawable feature
+        auto it = _drawables2D.insert(std::make_pair(new objects::ObjectHandle2D(&_scene2D, _drawables2D), nullptr));
+
+        // Add drawable
+        if (it.second) {
+            // Create drawable
+            it.first->second = Containers::pointer<drawables::ColorDrawable2D>(*it.first->first, _color2D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::VertexColorGL2D>("color2D"));
+
+            // Set drawable mesh
+            it.first->second->setMesh(mesh);
         }
 
         return *it.first->first;
     }
 
     // Plot from vertices and indices matrices
-    Object& MagnumApp::plot(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& function, const Eigen::MatrixXd& indices, const double& min, const double& max, const std::string& colormap)
+    objects::ObjectHandle3D& ScienceGraphics::surf(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& function, const Eigen::MatrixXd& indices, const double& min, const double& max, const std::string& colorset)
     {
-        // Colormap (this should be set from the outside)
-        auto map = tools::Turbo;
+        // Colormap
+        const auto map = colormap(colorset);
 
         // Get colors for each value function
-        Eigen::VectorXi vertex2Color = tools::mapColors(function, min, max, 256);
+        Eigen::VectorXi vertex2Color = tools::linearMap(function, min, max, map.size());
 
         // Data structure (positions and colors interleaved)
         struct VertexData {
@@ -151,8 +248,7 @@ namespace magnum_dynamics {
             for (size_t j = 0; j < indices.cols(); j++) {
                 size_t index = indices(i, j);
                 Eigen::Vector3f vertex = vertices.row(index).cast<float>();
-                arrayAppend(data, Corrade::InPlaceInit, Vector3(vertex),
-                    Color3{map[vertex2Color(index)][0], map[vertex2Color(index)][1], map[vertex2Color(index)][2]});
+                arrayAppend(data, Corrade::InPlaceInit, Vector3(vertex), Color3::fromSrgb(map[vertex2Color(index)]));
             }
 
         // Create buffer
@@ -167,12 +263,12 @@ namespace magnum_dynamics {
                 Shaders::VertexColorGL3D::Color3{});
 
         // Add object - drawable connection
-        auto it = _drawableObjects.insert(std::make_pair(new Object(_manipulator, _drawableObjects), nullptr));
+        auto it = _drawables3D.insert(std::make_pair(new objects::ObjectHandle3D(_manipulator, _drawables3D), nullptr));
 
         // Add drawable
         if (it.second) {
             // Create drawable
-            it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
+            it.first->second = Containers::pointer<drawables::ColorDrawable3D>(*it.first->first, _color3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::VertexColorGL3D>("color3D"));
 
             // Set drawable mesh
             it.first->second->setMesh(mesh);
@@ -182,7 +278,7 @@ namespace magnum_dynamics {
     }
 
     // Add from file
-    Object& MagnumApp::import(const std::string& file, const std::string& importer)
+    objects::ObjectHandle3D& ScienceGraphics::import(const std::string& file, const std::string& importer)
     {
         // Set importer
         if (!importer.empty())
@@ -276,7 +372,7 @@ namespace magnum_dynamics {
             }
             else {
                 // check how to do this
-                auto ctrObj = new Object(_manipulator, _drawableObjects);
+                auto ctrObj = new objects::ObjectHandle3D(_manipulator, _drawables3D);
 
                 /* Recursively add all children */
                 for (UnsignedInt objectId : sceneData->children3D())
@@ -284,22 +380,23 @@ namespace magnum_dynamics {
 
                 /* Set prior transformation  */
                 for (auto& child : ctrObj->children())
-                    transformation2Prior(static_cast<Object*>(&child), ctrObj->transformation());
+                    transformation2Prior(static_cast<objects::ObjectHandle3D*>(&child), ctrObj->transformation());
 
                 return *ctrObj;
             }
         }
         /* The format has no scene support, display just the first loaded mesh with a default material and be done with it */
         else if (!meshes.empty() && meshes[0]) {
-            // Create 3D object
-            auto it = _drawableObjects.insert(std::make_pair(new Object(_manipulator, _drawableObjects), nullptr));
+            // Create object
+            auto it = _drawables3D.insert(std::make_pair(new objects::ObjectHandle3D(_manipulator, _drawables3D), nullptr));
 
+            // Add drawable
             if (it.second) {
                 // Create drawable
-                it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
+                it.first->second = Containers::pointer<drawables::PhongDrawable3D>(*it.first->first, _phong3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("phong"));
 
                 // Set drawable mesh and default color
-                it.first->second->setMesh(*meshes[0]).setColor(0xffffff_rgbf);
+                static_cast<drawables::PhongDrawable3D&>(it.first->second->setMesh(*meshes[0])).setColor(0xffffff_rgbf);
             }
 
             return *it.first->first;
@@ -308,10 +405,31 @@ namespace magnum_dynamics {
         return *_manipulator;
     }
 
-    void MagnumApp::addObject(Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
+    void ScienceGraphics::drawEvent()
+    {
+        GL::defaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
+
+        if (!_phong3D.isEmpty())
+            _cameraTemp3D->draw(_phong3D);
+
+        if (!_color3D.isEmpty())
+            _cameraTemp3D->draw(_color3D);
+
+        if (!_texture3D.isEmpty())
+            _cameraTemp3D->draw(_texture3D);
+
+        if (!_color2D.isEmpty())
+            _cameraTemp2D->draw(_color2D);
+
+        swapBuffers();
+
+        redraw();
+    }
+
+    void ScienceGraphics::addObject(Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
         Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
         Containers::ArrayView<Containers::Optional<Trade::PhongMaterialData>> materials,
-        Object3D& parent, UnsignedInt i)
+        objects::ObjectHandle3D& parent, UnsignedInt i)
     {
         /* Import the object information */
         Debug{} << "Importing object" << i << _importer->object3DName(i);
@@ -322,50 +440,48 @@ namespace magnum_dynamics {
         }
 
         /* Create 3D object */
-        auto object = new Object(&parent, _drawableObjects);
+        auto object = new objects::ObjectHandle3D(&parent, _drawables3D);
 
         /* Object transformation */
-        // Debug{} << objectData->transformation();
         object->setTransformation(objectData->transformation());
-        // object->addPriorTransformation(objectData->transformation());
 
         /* Add a drawable if the object has a mesh and the mesh is loaded */
         if (objectData->instanceType() == Trade::ObjectInstanceType3D::Mesh && objectData->instance() != -1 && meshes[objectData->instance()]) {
             // Add object to the unordered map
-            auto it = _drawableObjects.insert(std::make_pair(object, nullptr));
+            auto it = _drawables3D.insert(std::make_pair(object, nullptr));
 
             if (it.second) {
                 const Int materialId = static_cast<Trade::MeshObjectData3D*>(objectData.get())->material();
 
                 /* Material not available / not loaded, use a default material */
                 if (materialId == -1 || !materials[materialId]) {
-                    it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
+                    it.first->second = Containers::pointer<drawables::PhongDrawable3D>(*it.first->first, _phong3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("phong"));
 
-                    it.first->second
-                        ->setMesh(*meshes[objectData->instance()])
+                    static_cast<drawables::PhongDrawable3D&>(it.first->second->setMesh(*meshes[objectData->instance()]))
                         .setColor(0xffffff_rgbf); // Default color
                 }
                 /* Textured material. If the texture failed to load, again just use adefault colored material. */
                 else if (materials[materialId]->hasAttribute(Trade::MaterialAttribute::DiffuseTexture)) {
                     Containers::Optional<GL::Texture2D>& texture = textures[materials[materialId]->diffuseTexture()];
 
-                    it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
-
-                    it.first->second->setMesh(*meshes[objectData->instance()]);
-
-                    if (texture)
-                        it.first->second->setTexture(*texture);
-                    else
-                        it.first->second->setColor(0xffffff_rgbf);
+                    if (texture) {
+                        it.first->second = Containers::pointer<drawables::TextureDrawable3D>(*it.first->first, _texture3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("texture"));
+                        static_cast<drawables::TextureDrawable3D&>(it.first->second->setMesh(*meshes[objectData->instance()]))
+                            .setTexture(*texture);
+                    }
+                    else {
+                        it.first->second = Containers::pointer<drawables::PhongDrawable3D>(*it.first->first, _phong3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("phong"));
+                        static_cast<drawables::PhongDrawable3D&>(it.first->second->setMesh(*meshes[objectData->instance()]))
+                            .setColor(0xffffff_rgbf);
+                    }
                 }
                 /* Not textured material */
                 else {
-                    it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
+                    it.first->second = Containers::pointer<drawables::PhongDrawable3D>(*it.first->first, _phong3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("phong"));
 
-                    it.first->second
-                        ->setMesh(*meshes[objectData->instance()])
-                        // .setMaterial(*materials[materialId]) // correct here (check with reference example)
+                    static_cast<drawables::PhongDrawable3D&>(it.first->second->setMesh(*meshes[objectData->instance()]))
                         .setColor(materials[materialId]->diffuseColor()); // set color by default but it should not be used
+                                                                          // .setMaterial(*materials[materialId]) // correct here (check with reference example)
                 }
             }
         }
@@ -375,150 +491,83 @@ namespace magnum_dynamics {
             addObject(meshes, textures, materials, *object, id);
     }
 
-    bool MagnumApp::transformation2Prior(Object* obj, Matrix4 transformation)
+    bool ScienceGraphics::transformation2Prior(objects::ObjectHandle3D* obj, Matrix4 transformation)
     {
         // Transformation
         transformation = transformation * obj->transformation();
 
         // Set prior transformation for the (drawable feature)
         for (auto& feature : obj->features())
-            static_cast<DrawableObject&>(feature).addPriorTransformation(transformation);
+            static_cast<drawables::AbstractDrawable3D&>(feature).addPriorTransformation(transformation);
 
         // Reset tranformation
         obj->resetTransformation();
 
         // Recursion
         for (auto& child : obj->children())
-            transformation2Prior(static_cast<Object*>(&child), transformation);
+            transformation2Prior(static_cast<objects::ObjectHandle3D*>(&child), transformation);
 
         return true;
     }
 
-    void MagnumApp::drawEvent()
+    Containers::StaticArrayView<256, const Vector3ub> ScienceGraphics::colormap(const std::string& map) const
     {
-        GL::defaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
+        if (!map.compare("sphere"))
+            return DebugTools::ColorMap::turbo();
+        else if (!map.compare("capsule"))
+            return DebugTools::ColorMap::magma();
+        else if (!map.compare("cone"))
+            return DebugTools::ColorMap::plasma();
+        else if (!map.compare("cylinder"))
+            return DebugTools::ColorMap::inferno();
+        else if (!map.compare("cylinder"))
+            return DebugTools::ColorMap::viridis();
+        else
+            return DebugTools::ColorMap::turbo();
+    }
 
-        _camera->camera()->draw(_drawables);
-
-        swapBuffers();
+    void ScienceGraphics::viewportEvent(ViewportEvent& event)
+    {
+        GL::defaultFramebuffer.setViewport({{}, event.framebufferSize()});
+        _cameraTemp3D->setViewport(event.windowSize());
 
         redraw();
     }
 
-    void MagnumApp::viewportEvent(ViewportEvent& event)
-    {
-        GL::defaultFramebuffer.setViewport({{}, event.framebufferSize()});
-        _camera->camera()->setViewport(event.windowSize());
-    }
-
-    void MagnumApp::mousePressEvent(MouseEvent& event)
+    void ScienceGraphics::mousePressEvent(MouseEvent& event)
     {
         if (event.button() == MouseEvent::Button::Left)
             _previousPosition = positionOnSphere(event.position());
     }
 
-    void MagnumApp::mouseReleaseEvent(MouseEvent& event)
+    void ScienceGraphics::mouseReleaseEvent(MouseEvent& event)
     {
         if (event.button() == MouseEvent::Button::Left)
             _previousPosition = Vector3();
     }
 
-    void MagnumApp::mouseScrollEvent(MouseScrollEvent& event)
+    void ScienceGraphics::mouseScrollEvent(MouseScrollEvent& event)
     {
         if (event.offset().y())
-            _camera->translate(event.offset().y());
+            _cameraTemp3D->translate(event.offset().y());
 
         redraw();
     }
 
-    void MagnumApp::mouseMoveEvent(MouseMoveEvent& event)
+    void ScienceGraphics::mouseMoveEvent(MouseMoveEvent& event)
     {
-        if (event.buttons() == MouseMoveEvent::Button::Left) {
-            _camera->move(event.relativePosition());
-        }
+        if (event.buttons() == MouseMoveEvent::Button::Left)
+            _cameraTemp3D->move(event.relativePosition());
 
         redraw();
     }
 
-    Vector3 MagnumApp::positionOnSphere(const Vector2i& position) const
+    Vector3 ScienceGraphics::positionOnSphere(const Vector2i& position) const
     {
-        const Vector2 positionNormalized = Vector2{position} / Vector2{_camera->camera()->viewport()} - Vector2{0.5f};
+        const Vector2 positionNormalized = Vector2{position} / Vector2{_cameraTemp3D->viewport()} - Vector2{0.5f};
         const Float length = positionNormalized.length();
         const Vector3 result(length > 1.0f ? Vector3(positionNormalized, 0.0f) : Vector3(positionNormalized, 1.0f - length));
+
         return (result * Vector3::yScale(-1.0f)).normalized();
     }
-} // namespace magnum_dynamics
-
-// Object& MagnumApp::plot(const std::string& file, const Eigen::VectorXd& x, const std::string& colormap)
-//     {
-//         setImporter("AssimpImporter");
-//         // _importer->configuration()
-
-//         // Check importer
-//         if (!_importer)
-//             std::exit(1);
-
-//         // Import file
-//         Debug{} << "Opening file" << file;
-//         if (!_importer->openFile(file))
-//             std::exit(4);
-
-//         if (_importer->meshCount() != 1) {
-//             Warning{} << "Cannot plot, zero or multiple meshes present";
-//             return *_manipulator;
-//         }
-
-//         Debug{} << "Importing mesh" << 0 << _importer->meshName(0);
-
-//         Containers::Optional<Trade::MeshData> meshData = _importer->mesh(0);
-
-//         if (!meshData || meshData->primitive() != MeshPrimitive::Triangles) {
-//             Warning{} << "Cannot load the mesh, skipping";
-//         }
-//         else {
-//             auto map = tools::Turbo;
-
-//             struct VertexData {
-//                 Vector3 position;
-//                 Color3 color;
-//             };
-
-//             Containers::Array<VertexData> data;
-
-//             /* Plot the loaded mesh */
-//             Eigen::VectorXi vertex2Color = tools::mapColors(x, x.minCoeff(), x.maxCoeff(), 256);
-//             for (auto& i : meshData->indicesAsArray())
-//                 arrayAppend(data, Corrade::InPlaceInit, meshData->positions3DAsArray()[i], Color3{map[vertex2Color(i)][0], map[vertex2Color(i)][1], map[vertex2Color(i)][2]});
-
-//             /* Plot the cube */
-//             // Trade::MeshData cube_mesh = Primitives::cubeSolid();
-//             // Eigen::VectorXd val = Eigen::VectorXd::Random(24);
-//             // Eigen::VectorXi vertex2Color = tools::mapColors(val, val.minCoeff(), val.maxCoeff(), 256);
-//             // for (auto& i : cube_mesh.indicesAsArray())
-//             //     arrayAppend(data, Containers::InPlaceInit, cube_mesh.positions3DAsArray()[i], Color3{map[vertex2Color(i)][0], map[vertex2Color(i)][1], map[vertex2Color(i)][2]});
-
-//             GL::Buffer buffer;
-//             buffer.setData(data);
-
-//             GL::Mesh mesh;
-//             mesh.setPrimitive(MeshPrimitive::Triangles)
-//                 .setCount(data.size())
-//                 .addVertexBuffer(std::move(buffer), 0,
-//                     Shaders::VertexColorGL3D::Position{},
-//                     Shaders::VertexColorGL3D::Color3{});
-
-//             auto it = _drawableObjs.insert(std::make_pair(new Object(_manipulator, _drawableObjs), nullptr));
-
-//             if (it.second) {
-//                 // Create drawable
-//                 it.first->second = Containers::pointer<DrawableObject>(*it.first->first, _drawables, _shadersManager);
-
-//                 // Set drawable mesh
-//                 it.first->second->setMesh(mesh);
-//             }
-
-//             return *it.first->first;
-//         }
-
-//         return *_manipulator;
-//     }
+} // namespace science_graphics

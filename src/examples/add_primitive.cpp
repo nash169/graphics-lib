@@ -1,18 +1,10 @@
-#include <iostream>
+#include <science_graphics/ScienceGraphics.hpp>
 
-#include <magnum_dynamics/MagnumApp.hpp>
-// #include <magnum_dynamics/Object.hpp>
-
-// #include <Magnum/DebugTools/ColorMap.h>
-// #include <Magnum/DebugTools/ObjectRenderer.h>
-// #include <Magnum/DebugTools/ResourceManager.h>
-#include <magnum_dynamics/tools/helper.hpp>
-
-using namespace magnum_dynamics;
+using namespace science_graphics;
 
 int main(int argc, char** argv)
 {
-    MagnumApp app({argc, argv});
+    ScienceGraphics app({argc, argv});
 
     // app.addFrame();
 
@@ -41,7 +33,7 @@ int main(int argc, char** argv)
         .setColor(Color4::cyan())
         .setTransformation(Matrix4::translation({0.0f, 2.0f, 2.0f}));
 
-    app.camera()->setPose({5., 0., 5.});
+    app.camera3D().setPose(Vector3{5., 0., 5.});
 
     return app.exec();
 }
