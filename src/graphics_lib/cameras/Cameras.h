@@ -22,15 +22,16 @@
     SOFTWARE.
 */
 
-#include <graphics_lib/Graphics.hpp>
+#ifndef SCIENCEGRAPHICS_CAMERAS_HPP
+#define SCIENCEGRAPHICS_CAMERAS_HPP
 
-using namespace graphics_lib;
+namespace graphics_lib {
+    namespace cameras {
+        template <size_t>
+        class CameraHandle;
+        typedef CameraHandle<3> CameraHandle3D;
+        typedef CameraHandle<2> CameraHandle2D;
+    } // namespace cameras
+} // namespace graphics_lib
 
-int main(int argc, char** argv)
-{
-    Graphics app({argc, argv});
-
-    app.colorbar(0, 1);
-
-    return app.exec();
-}
+#endif // SCIENCEGRAPHICS_CAMERAS_HPP

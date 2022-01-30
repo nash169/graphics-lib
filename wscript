@@ -6,13 +6,13 @@ import os.path as osp
 import fnmatch
 
 VERSION = "1.0.0"
-APPNAME = "science-graphics"
+APPNAME = "graphics-lib"
 
 srcdir = "."
 blddir = "build"
 
 # Tools' name and directory
-tools = {"utils_cpp": ""}
+tools = {"utilslib": ""}
 
 
 def options(opt):
@@ -69,7 +69,7 @@ def configure(cfg):
 
 def build(bld):
     # Library name
-    bld.get_env()["libname"] = "ScienceGraphics"
+    bld.get_env()["libname"] = "Graphics"
 
     # Includes
     includes = []
@@ -82,7 +82,7 @@ def build(bld):
 
     # Sources
     sources = []
-    sources_path = "src/science_graphics"
+    sources_path = "src/graphics_lib"
     for root, dirnames, filenames in os.walk(
         osp.join(bld.path.abspath(), sources_path)
     ):
@@ -132,5 +132,5 @@ def build(bld):
         )
 
     # Install tools
-    bld.install_files("${PREFIX}/share/waf", "scripts/science_graphics.py")
+    bld.install_files("${PREFIX}/share/waf", "scripts/graphicslib.py")
     bld.install_files("${PREFIX}/share/waf", "waf_tools/utils.py")

@@ -1,4 +1,28 @@
-#include "science_graphics/ScienceGraphics.hpp"
+/*
+    This file is part of graphics-lib.
+
+    Copyright (c) 2020, 2021, 2022 Bernardo Fichera <bernardo.fichera@gmail.com>
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+*/
+
+#include "graphics_lib/Graphics.hpp"
 
 /* PRIMITIVES */
 #include <Magnum/Primitives/Axis.h>
@@ -10,7 +34,7 @@
 #include <Magnum/Primitives/Icosphere.h>
 
 /* MATH */
-#include "science_graphics/tools/math.hpp"
+#include "graphics_lib/tools/math.hpp"
 
 /* COLORMAPS */
 #include <Magnum/DebugTools/ColorMap.h>
@@ -46,8 +70,8 @@
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
 
-namespace science_graphics {
-    ScienceGraphics::ScienceGraphics(const Arguments& arguments)
+namespace graphics_lib {
+    Graphics::Graphics(const Arguments& arguments)
         : Platform::Application{arguments, NoCreate}
     {
         /* Try 8x MSAA, fall back to zero samples if not possible. Enable only 2x MSAA if we have enough DPI. */
@@ -104,13 +128,13 @@ namespace science_graphics {
 
         redraw();
     }
-    ScienceGraphics& ScienceGraphics::setBackground(const std::string& colorname)
+    Graphics& Graphics::setBackground(const std::string& colorname)
     {
         GL::Renderer::setClearColor(tools::color(colorname));
         return *this;
     }
 
-    objects::ObjectHandle3D& ScienceGraphics::addFrame()
+    objects::ObjectHandle3D& Graphics::addFrame()
     {
         auto axis_mesh = Primitives::axis3D();
 
@@ -132,7 +156,7 @@ namespace science_graphics {
     }
 
     // Add primitive
-    objects::ObjectHandle3D& ScienceGraphics::addPrimitive(const std::string& primitive)
+    objects::ObjectHandle3D& Graphics::addPrimitive(const std::string& primitive)
     {
         // Default mesh cube
         Trade::MeshData mesh_data = Primitives::cubeSolid();
@@ -180,7 +204,7 @@ namespace science_graphics {
         return *it.first->first;
     }
 
-    objects::ObjectHandle2D& ScienceGraphics::colorbar(const double& min, const double& max, const std::string& colorset)
+    objects::ObjectHandle2D& Graphics::colorbar(const double& min, const double& max, const std::string& colorset)
     {
         // Map
         const auto map = colormap(colorset);
@@ -233,7 +257,7 @@ namespace science_graphics {
     }
 
     // Plot from vertices and indices matrices
-    objects::ObjectHandle3D& ScienceGraphics::surf(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& function, const Eigen::MatrixXd& indices, const double& min, const double& max, const std::string& colorset)
+    objects::ObjectHandle3D& Graphics::surf(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& function, const Eigen::MatrixXd& indices, const double& min, const double& max, const std::string& colorset)
     {
         // Colormap
         const auto map = colormap(colorset);
@@ -283,7 +307,7 @@ namespace science_graphics {
     }
 
     // Add from file
-    objects::ObjectHandle3D& ScienceGraphics::import(const std::string& file, const std::string& importer)
+    objects::ObjectHandle3D& Graphics::import(const std::string& file, const std::string& importer)
     {
         // Set importer
         if (!importer.empty())
@@ -410,7 +434,7 @@ namespace science_graphics {
         return *_manipulator;
     }
 
-    void ScienceGraphics::drawEvent()
+    void Graphics::drawEvent()
     {
         GL::defaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
 
@@ -431,7 +455,7 @@ namespace science_graphics {
         redraw();
     }
 
-    void ScienceGraphics::addObject(Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
+    void Graphics::addObject(Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
         Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
         Containers::ArrayView<Containers::Optional<Trade::PhongMaterialData>> materials,
         objects::ObjectHandle3D& parent, UnsignedInt i)
@@ -496,7 +520,7 @@ namespace science_graphics {
             addObject(meshes, textures, materials, *object, id);
     }
 
-    bool ScienceGraphics::transformation2Prior(objects::ObjectHandle3D* obj, Matrix4 transformation)
+    bool Graphics::transformation2Prior(objects::ObjectHandle3D* obj, Matrix4 transformation)
     {
         // Transformation
         transformation = transformation * obj->transformation();
@@ -515,7 +539,7 @@ namespace science_graphics {
         return true;
     }
 
-    Containers::StaticArrayView<256, const Vector3ub> ScienceGraphics::colormap(const std::string& map) const
+    Containers::StaticArrayView<256, const Vector3ub> Graphics::colormap(const std::string& map) const
     {
         if (!map.compare("sphere"))
             return DebugTools::ColorMap::turbo();
@@ -531,7 +555,7 @@ namespace science_graphics {
             return DebugTools::ColorMap::turbo();
     }
 
-    void ScienceGraphics::viewportEvent(ViewportEvent& event)
+    void Graphics::viewportEvent(ViewportEvent& event)
     {
         GL::defaultFramebuffer.setViewport({{}, event.framebufferSize()});
         _cameraTemp3D->setViewport(event.windowSize());
@@ -539,19 +563,19 @@ namespace science_graphics {
         redraw();
     }
 
-    void ScienceGraphics::mousePressEvent(MouseEvent& event)
+    void Graphics::mousePressEvent(MouseEvent& event)
     {
         if (event.button() == MouseEvent::Button::Left)
             _previousPosition = positionOnSphere(event.position());
     }
 
-    void ScienceGraphics::mouseReleaseEvent(MouseEvent& event)
+    void Graphics::mouseReleaseEvent(MouseEvent& event)
     {
         if (event.button() == MouseEvent::Button::Left)
             _previousPosition = Vector3();
     }
 
-    void ScienceGraphics::mouseScrollEvent(MouseScrollEvent& event)
+    void Graphics::mouseScrollEvent(MouseScrollEvent& event)
     {
         if (event.offset().y())
             _cameraTemp3D->translate(event.offset().y());
@@ -559,7 +583,7 @@ namespace science_graphics {
         redraw();
     }
 
-    void ScienceGraphics::mouseMoveEvent(MouseMoveEvent& event)
+    void Graphics::mouseMoveEvent(MouseMoveEvent& event)
     {
         if (event.buttons() == MouseMoveEvent::Button::Left)
             _cameraTemp3D->move(event.relativePosition());
@@ -567,7 +591,7 @@ namespace science_graphics {
         redraw();
     }
 
-    Vector3 ScienceGraphics::positionOnSphere(const Vector2i& position) const
+    Vector3 Graphics::positionOnSphere(const Vector2i& position) const
     {
         const Vector2 positionNormalized = Vector2{position} / Vector2{_cameraTemp3D->viewport()} - Vector2{0.5f};
         const Float length = positionNormalized.length();
@@ -575,4 +599,4 @@ namespace science_graphics {
 
         return (result * Vector3::yScale(-1.0f)).normalized();
     }
-} // namespace science_graphics
+} // namespace graphics_lib

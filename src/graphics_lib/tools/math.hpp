@@ -22,15 +22,20 @@
     SOFTWARE.
 */
 
-#include <graphics_lib/Graphics.hpp>
+#ifndef SCIENCEGRAPHICS_TOOLS_MATH_HPP
+#define SCIENCEGRAPHICS_TOOLS_MATH_HPP
 
-using namespace graphics_lib;
+#include <Eigen/Core>
 
-int main(int argc, char** argv)
-{
-    Graphics app({argc, argv});
+namespace graphics_lib {
+    namespace tools {
+        inline Eigen::VectorXi linearMap(const Eigen::VectorXd x, const double& min, const double& max, size_t n)
+        {
+            double q = abs(max - min) / n;
 
-    app.colorbar(0, 1);
+            return ((x.array() / q) + ceil(n / 2)).cast<int>();
+        }
+    } // namespace tools
+} // namespace graphics_lib
 
-    return app.exec();
-}
+#endif // SCIENCEGRAPHICS_UTILS_MATH_HPP

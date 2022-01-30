@@ -22,15 +22,31 @@
     SOFTWARE.
 */
 
-#include <graphics_lib/Graphics.hpp>
+#ifndef SCIENCEGRAPHICS_DRAWABLES_DRAWABLES_H
+#define SCIENCEGRAPHICS_DRAWABLES_DRAWABLES_H
 
-using namespace graphics_lib;
+namespace graphics_lib {
+    namespace drawables {
+        template <size_t>
+        class AbstractDrawable;
+        typedef AbstractDrawable<3> AbstractDrawable3D;
+        typedef AbstractDrawable<2> AbstractDrawable2D;
 
-int main(int argc, char** argv)
-{
-    Graphics app({argc, argv});
+        template <size_t>
+        class ColorDrawable;
+        typedef ColorDrawable<3> ColorDrawable3D;
+        typedef ColorDrawable<2> ColorDrawable2D;
 
-    app.colorbar(0, 1);
+        template <size_t>
+        class PhongDrawable;
+        typedef PhongDrawable<3> PhongDrawable3D;
+        typedef PhongDrawable<2> PhongDrawable2D;
 
-    return app.exec();
-}
+        template <size_t>
+        class TextureDrawable;
+        typedef TextureDrawable<3> TextureDrawable3D;
+        typedef TextureDrawable<2> TextureDrawable2D;
+    } // namespace drawables
+} // namespace graphics_lib
+
+#endif // SCIENCEGRAPHICS_DRAWABLES_DRAWABLES_H

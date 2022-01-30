@@ -1,11 +1,35 @@
+/*
+    This file is part of graphics-lib.
+
+    Copyright (c) 2020, 2021, 2022 Bernardo Fichera <bernardo.fichera@gmail.com>
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+*/
+
 #ifndef SCIENCEGRAPHICS_PHONG_DRAWABLE_HPP
 #define SCIENCEGRAPHICS_PHONG_DRAWABLE_HPP
 
-#include "science_graphics/drawbles/AbstractDrawable.hpp"
+#include "graphics_lib/drawbles/AbstractDrawable.hpp"
 #include <Magnum/Shaders/Phong.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 
-namespace science_graphics {
+namespace graphics_lib {
     namespace drawables {
         template <size_t N = 3>
         class PhongDrawable : public AbstractDrawable<N> {
@@ -67,6 +91,6 @@ namespace science_graphics {
         };
 
     } // namespace drawables
-} // namespace science_graphics
+} // namespace graphics_lib
 
 #endif // SCIENCEGRAPHICS_PHONG_DRAWABLE_HPP

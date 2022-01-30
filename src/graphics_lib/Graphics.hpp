@@ -1,3 +1,27 @@
+/*
+    This file is part of graphics-lib.
+
+    Copyright (c) 2020, 2021, 2022 Bernardo Fichera <bernardo.fichera@gmail.com>
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+*/
+
 #ifndef SCIENCEGRAPHICS_SCIENCEGRAPHICS_HPP
 #define SCIENCEGRAPHICS_SCIENCEGRAPHICS_HPP
 
@@ -45,22 +69,22 @@ using namespace Magnum;
 using namespace Math::Literals;
 
 /* CAMERAS */
-#include "science_graphics/cameras/CameraHandle.hpp"
-#include "science_graphics/cameras/Cameras.h"
+#include "graphics_lib/cameras/CameraHandle.hpp"
+#include "graphics_lib/cameras/Cameras.h"
 
 /* OBJECTS */
-#include "science_graphics/objects/ObjectHandle.hpp"
-#include "science_graphics/objects/Objects.h"
+#include "graphics_lib/objects/ObjectHandle.hpp"
+#include "graphics_lib/objects/Objects.h"
 
 /* HELPERS */
-#include "science_graphics/tools/helper.hpp"
+#include "graphics_lib/tools/helper.hpp"
 
-namespace science_graphics {
-    class ScienceGraphics : public Platform::Application {
+namespace graphics_lib {
+    class Graphics : public Platform::Application {
     public:
-        explicit ScienceGraphics(const Arguments& arguments);
+        explicit Graphics(const Arguments& arguments);
 
-        ~ScienceGraphics()
+        ~Graphics()
         {
             _drawables3D.clear();
             _drawables2D.clear();
@@ -77,7 +101,7 @@ namespace science_graphics {
         size_t numObjects() const { return _drawables3D.size() + _drawables2D.size(); }
 
         // Set window background
-        ScienceGraphics& setBackground(const std::string& colorname);
+        Graphics& setBackground(const std::string& colorname);
 
         // Cartesian frame
         objects::ObjectHandle3D& addFrame();
@@ -146,6 +170,6 @@ namespace science_graphics {
         void mouseScrollEvent(MouseScrollEvent& event) override;
         Vector3 positionOnSphere(const Vector2i& position) const;
     };
-} // namespace science_graphics
+} // namespace graphics_lib
 
 #endif // SCIENCEGRAPHICS_SCIENCEGRAPHICS_HPP

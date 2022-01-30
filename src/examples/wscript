@@ -17,7 +17,7 @@ def build(bld):
     sources = [f[len(bld.path.abspath()) + 1:] for f in sources]
 
     # External required libraries for the examples
-    example_required = {"colored_mesh.cpp": ["UTILSCPP"]}
+    example_required = {"colored_mesh.cpp": ["UTILSLIB"]}
 
     # External optional libraries for the examples
     example_optional = {}

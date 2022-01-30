@@ -22,15 +22,16 @@
     SOFTWARE.
 */
 
-#include <graphics_lib/Graphics.hpp>
+#ifndef SCIENCEGRAPHICS_OBJECTS_HPP
+#define SCIENCEGRAPHICS_OBJECTS_HPP
 
-using namespace graphics_lib;
+namespace graphics_lib {
+    namespace objects {
+        template <size_t>
+        class ObjectHandle;
+        typedef ObjectHandle<2> ObjectHandle2D;
+        typedef ObjectHandle<3> ObjectHandle3D;
+    } // namespace objects
+} // namespace graphics_lib
 
-int main(int argc, char** argv)
-{
-    Graphics app({argc, argv});
-
-    app.colorbar(0, 1);
-
-    return app.exec();
-}
+#endif // SCIENCEGRAPHICS_OBJECTS_HPP
