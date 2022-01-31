@@ -22,8 +22,8 @@
     SOFTWARE.
 */
 
-#ifndef SCIENCEGRAPHICS_SCIENCEGRAPHICS_HPP
-#define SCIENCEGRAPHICS_SCIENCEGRAPHICS_HPP
+#ifndef GRAPHICSLIB_GRAPHICS_HPP
+#define GRAPHICSLIB_GRAPHICS_HPP
 
 /* STD LIBRARY */
 #include <iostream>
@@ -172,4 +172,4 @@ namespace graphics_lib {
     };
 } // namespace graphics_lib
 
-#endif // SCIENCEGRAPHICS_SCIENCEGRAPHICS_HPP
+#endif // GRAPHICSLIB_GRAPHICS_HPP
