@@ -89,7 +89,7 @@ Once the library is compiled all the examples can be found in
 ```sh
 ./build/src/examples/
 ```
-Certain examples depends on **utils-lib**
+Certain examples depend on **utils-lib**
 ```sh
 cd /path/to/utils-lib
 waf (./waf) configure --release build install
