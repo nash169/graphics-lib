@@ -27,7 +27,7 @@ cd eigen && mkdir build && cmake .. && (sudo) make install
 ### Installation
 Clone the repository including the submodules
 ```sh
-git clone --recursive https://github.com/nash169/utils-lib.git (git@github.com:nash169/utils-lib.git)
+git clone --recursive https://github.com/nash169/graphics-lib.git (git@github.com:nash169/graphics-lib.git)
 ```
 **graphics-lib** relies on WAF compilation tool.
 Arch provides an updated version of WAF exec in the standard repo
@@ -37,7 +37,7 @@ sudo pacman -S waf
 For other distros it is better to download the latest version from the official website and move the executable in the library repo
 ```sh
 wget 'https://waf.io/waf-2.0.23'
-mv waf-2.0.23 waf && mv waf /path/to/utils-lib
+mv waf-2.0.23 waf && mv waf /path/to/graphics-lib
 cd /path/to/kernel-lib
 chmod +x waf
 ```
