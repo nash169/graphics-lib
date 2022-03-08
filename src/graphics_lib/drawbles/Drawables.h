@@ -22,20 +22,31 @@
     SOFTWARE.
 */
 
-#include <graphics_lib/Graphics.hpp>
+#ifndef GRAPHICSLIB_DRAWABLES_DRAWABLES_H
+#define GRAPHICSLIB_DRAWABLES_DRAWABLES_H
 
-using namespace graphics_lib;
+namespace graphics_lib {
+    namespace drawables {
+        template <size_t>
+        class AbstractDrawable;
+        typedef AbstractDrawable<3> AbstractDrawable3D;
+        typedef AbstractDrawable<2> AbstractDrawable2D;
 
-int main(int argc, char** argv)
-{
-    Graphics app({argc, argv});
+        template <size_t>
+        class ColorDrawable;
+        typedef ColorDrawable<3> ColorDrawable3D;
+        typedef ColorDrawable<2> ColorDrawable2D;
 
-    std::string fname = (argc > 1) ? argv[1] : "rsc/franka/link0.dae";
+        template <size_t>
+        class PhongDrawable;
+        typedef PhongDrawable<3> PhongDrawable3D;
+        typedef PhongDrawable<2> PhongDrawable2D;
 
-    app.import(fname);
+        template <size_t>
+        class TextureDrawable;
+        typedef TextureDrawable<3> TextureDrawable3D;
+        typedef TextureDrawable<2> TextureDrawable2D;
+    } // namespace drawables
+} // namespace graphics_lib
 
-    app.addFrame()
-        .setTransformation(Matrix4());
-
-    return app.exec();
-}
+#endif // GRAPHICSLIB_DRAWABLES_DRAWABLES_H

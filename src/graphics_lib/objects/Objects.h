@@ -22,20 +22,16 @@
     SOFTWARE.
 */
 
-#include <graphics_lib/Graphics.hpp>
+#ifndef GRAPHICSLIB_OBJECTS_HPP
+#define GRAPHICSLIB_OBJECTS_HPP
 
-using namespace graphics_lib;
+namespace graphics_lib {
+    namespace objects {
+        template <size_t>
+        class ObjectHandle;
+        typedef ObjectHandle<2> ObjectHandle2D;
+        typedef ObjectHandle<3> ObjectHandle3D;
+    } // namespace objects
+} // namespace graphics_lib
 
-int main(int argc, char** argv)
-{
-    Graphics app({argc, argv});
-
-    std::string fname = (argc > 1) ? argv[1] : "rsc/franka/link0.dae";
-
-    app.import(fname);
-
-    app.addFrame()
-        .setTransformation(Matrix4());
-
-    return app.exec();
-}
+#endif // GRAPHICSLIB_OBJECTS_HPP

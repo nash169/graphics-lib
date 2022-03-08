@@ -1,18 +1,40 @@
 #!/usr/bin/env python
 # encoding: utf-8
+#
+#    This file is part of graphics-lib.
+#
+#    Copyright (c) 2020, 2021, 2022 Bernardo Fichera <bernardo.fichera@gmail.com>
+#
+#    Permission is hereby granted, free of charge, to any person obtaining a copy
+#    of this software and associated documentation files (the "Software"), to deal
+#    in the Software without restriction, including without limitation the rights
+#    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#    copies of the Software, and to permit persons to whom the Software is
+#    furnished to do so, subject to the following conditions:
+#
+#    The above copyright notice and this permission notice shall be included in all
+#    copies or substantial portions of the Software.
+#
+#    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#    SOFTWARE.
 
 import os
 import os.path as osp
 import fnmatch
 
 VERSION = "1.0.0"
-APPNAME = "magnum-dynamics"
+APPNAME = "graphics-lib"
 
 srcdir = "."
 blddir = "build"
 
 # Tools' name and directory
-tools = {"utils_cpp": ""}
+tools = {"utilslib": ""}
 
 
 def options(opt):
@@ -69,21 +91,20 @@ def configure(cfg):
 
 def build(bld):
     # Library name
-    bld.get_env()["libname"] = "MagnumDynamics"
+    bld.get_env()["libname"] = "Graphics"
 
     # Includes
     includes = []
     includes_path = "src"
-    for root, dirnames, filenames in os.walk(
-        osp.join(bld.path.abspath(), includes_path)
-    ):
-        for filename in fnmatch.filter(filenames, "*.hpp"):
-            includes.append(os.path.join(root, filename))
+    for root, _, filenames in os.walk(osp.join(bld.path.abspath(), includes_path)):
+        for filename in filenames:
+            if filename.endswith(('.hpp', '.h')):
+                includes.append(os.path.join(root, filename))
     includes = [f[len(bld.path.abspath()) + 1:] for f in includes]
 
     # Sources
     sources = []
-    sources_path = "src/magnum_dynamics"
+    sources_path = "src/graphics_lib"
     for root, dirnames, filenames in os.walk(
         osp.join(bld.path.abspath(), sources_path)
     ):
@@ -133,5 +154,5 @@ def build(bld):
         )
 
     # Install tools
-    bld.install_files("${PREFIX}/share/waf", "scripts/magnum_dynamics.py")
+    bld.install_files("${PREFIX}/share/waf", "scripts/graphicslib.py")
     bld.install_files("${PREFIX}/share/waf", "waf_tools/utils.py")

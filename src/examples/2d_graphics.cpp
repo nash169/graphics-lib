@@ -30,12 +30,7 @@ int main(int argc, char** argv)
 {
     Graphics app({argc, argv});
 
-    std::string fname = (argc > 1) ? argv[1] : "rsc/franka/link0.dae";
-
-    app.import(fname);
-
-    app.addFrame()
-        .setTransformation(Matrix4());
+    app.colorbar(0, 1);
 
     return app.exec();
 }

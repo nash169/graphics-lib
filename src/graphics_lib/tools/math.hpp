@@ -22,20 +22,20 @@
     SOFTWARE.
 */
 
-#include <graphics_lib/Graphics.hpp>
+#ifndef GRAPHICSLIB_TOOLS_MATH_HPP
+#define GRAPHICSLIB_TOOLS_MATH_HPP
 
-using namespace graphics_lib;
+#include <Eigen/Core>
 
-int main(int argc, char** argv)
-{
-    Graphics app({argc, argv});
+namespace graphics_lib {
+    namespace tools {
+        inline Eigen::VectorXi linearMap(const Eigen::VectorXd x, const double& min, const double& max, size_t n)
+        {
+            double q = abs(max - min) / n;
 
-    std::string fname = (argc > 1) ? argv[1] : "rsc/franka/link0.dae";
+            return ((x.array() / q) + ceil(n / 2)).cast<int>();
+        }
+    } // namespace tools
+} // namespace graphics_lib
 
-    app.import(fname);
-
-    app.addFrame()
-        .setTransformation(Matrix4());
-
-    return app.exec();
-}
+#endif // GRAPHICSLIB_UTILS_MATH_HPP

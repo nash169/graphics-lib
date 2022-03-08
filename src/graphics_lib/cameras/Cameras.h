@@ -22,20 +22,16 @@
     SOFTWARE.
 */
 
-#include <graphics_lib/Graphics.hpp>
+#ifndef GRAPHICSLIB_CAMERAS_HPP
+#define GRAPHICSLIB_CAMERAS_HPP
 
-using namespace graphics_lib;
+namespace graphics_lib {
+    namespace cameras {
+        template <size_t>
+        class CameraHandle;
+        typedef CameraHandle<3> CameraHandle3D;
+        typedef CameraHandle<2> CameraHandle2D;
+    } // namespace cameras
+} // namespace graphics_lib
 
-int main(int argc, char** argv)
-{
-    Graphics app({argc, argv});
-
-    std::string fname = (argc > 1) ? argv[1] : "rsc/franka/link0.dae";
-
-    app.import(fname);
-
-    app.addFrame()
-        .setTransformation(Matrix4());
-
-    return app.exec();
-}
+#endif // GRAPHICSLIB_CAMERAS_HPP
