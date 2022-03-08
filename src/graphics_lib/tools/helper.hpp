@@ -22,8 +22,8 @@
     SOFTWARE.
 */
 
-#ifndef SCIENCEGRAPHICS_TOOLS_HELPER_HPP
-#define SCIENCEGRAPHICS_TOOLS_HELPER_HPP
+#ifndef GRAPHICSLIB_TOOLS_HELPER_HPP
+#define GRAPHICSLIB_TOOLS_HELPER_HPP
 
 namespace graphics_lib {
     namespace tools {
@@ -56,4 +56,4 @@ namespace graphics_lib {
     } // namespace tools
 } // namespace graphics_lib
 
-#endif // SCIENCEGRAPHICS_TOOLS_HELPER_HPP
+#endif // GRAPHICSLIB_TOOLS_HELPER_HPP

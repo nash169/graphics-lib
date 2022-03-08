@@ -22,8 +22,8 @@
     SOFTWARE.
 */
 
-#ifndef SCIENCEGRAPHICS_TOOLS_MATH_HPP
-#define SCIENCEGRAPHICS_TOOLS_MATH_HPP
+#ifndef GRAPHICSLIB_TOOLS_MATH_HPP
+#define GRAPHICSLIB_TOOLS_MATH_HPP
 
 #include <Eigen/Core>
 
@@ -38,4 +38,4 @@ namespace graphics_lib {
     } // namespace tools
 } // namespace graphics_lib
 
-#endif // SCIENCEGRAPHICS_UTILS_MATH_HPP
+#endif // GRAPHICSLIB_UTILS_MATH_HPP

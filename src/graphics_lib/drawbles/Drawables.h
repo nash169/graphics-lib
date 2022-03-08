@@ -22,8 +22,8 @@
     SOFTWARE.
 */
 
-#ifndef SCIENCEGRAPHICS_DRAWABLES_DRAWABLES_H
-#define SCIENCEGRAPHICS_DRAWABLES_DRAWABLES_H
+#ifndef GRAPHICSLIB_DRAWABLES_DRAWABLES_H
+#define GRAPHICSLIB_DRAWABLES_DRAWABLES_H
 
 namespace graphics_lib {
     namespace drawables {
@@ -49,4 +49,4 @@ namespace graphics_lib {
     } // namespace drawables
 } // namespace graphics_lib
 
-#endif // SCIENCEGRAPHICS_DRAWABLES_DRAWABLES_H
+#endif // GRAPHICSLIB_DRAWABLES_DRAWABLES_H

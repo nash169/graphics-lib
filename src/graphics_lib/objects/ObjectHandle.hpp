@@ -22,8 +22,8 @@
     SOFTWARE.
 */
 
-#ifndef SCIENCEGRAPHICS_OBJECT_HANDLE_HPP
-#define SCIENCEGRAPHICS_OBJECT_HANDLE_HPP
+#ifndef GRAPHICSLIB_OBJECT_HANDLE_HPP
+#define GRAPHICSLIB_OBJECT_HANDLE_HPP
 
 #include <Magnum/GL/Mesh.h>
 #include <Magnum/SceneGraph/Object.hpp>
@@ -110,4 +110,4 @@ namespace graphics_lib {
     } // namespace objects
 } // namespace graphics_lib
 
-#endif // SCIENCEGRAPHICS_OBJECT_HANDLE_HPP
+#endif // GRAPHICSLIB_OBJECT_HANDLE_HPP

@@ -22,8 +22,8 @@
     SOFTWARE.
 */
 
-#ifndef SCIENCEGRAPHICS_COLOR_DRAWABLE_HPP
-#define SCIENCEGRAPHICS_COLOR_DRAWABLE_HPP
+#ifndef GRAPHICSLIB_COLOR_DRAWABLE_HPP
+#define GRAPHICSLIB_COLOR_DRAWABLE_HPP
 
 #include "graphics_lib/drawbles/AbstractDrawable.hpp"
 #include <Magnum/Shaders/VertexColorGL.h>
@@ -52,4 +52,4 @@ namespace graphics_lib {
     } // namespace drawables
 } // namespace graphics_lib
 
-#endif // SCIENCEGRAPHICS_COLOR_DRAWABLE_HPP
+#endif // GRAPHICSLIB_COLOR_DRAWABLE_HPP

@@ -22,8 +22,8 @@
     SOFTWARE.
 */
 
-#ifndef SCIENCEGRAPHICS_PHONG_DRAWABLE_HPP
-#define SCIENCEGRAPHICS_PHONG_DRAWABLE_HPP
+#ifndef GRAPHICSLIB_PHONG_DRAWABLE_HPP
+#define GRAPHICSLIB_PHONG_DRAWABLE_HPP
 
 #include "graphics_lib/drawbles/AbstractDrawable.hpp"
 #include <Magnum/Shaders/Phong.h>
@@ -93,4 +93,4 @@ namespace graphics_lib {
     } // namespace drawables
 } // namespace graphics_lib
 
-#endif // SCIENCEGRAPHICS_PHONG_DRAWABLE_HPP
+#endif // GRAPHICSLIB_PHONG_DRAWABLE_HPP

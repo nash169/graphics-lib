@@ -22,13 +22,13 @@
     SOFTWARE.
 */
 
-#ifndef SCIENCEGRAPHICS_CAMERA_HANDLE_HPP
-#define SCIENCEGRAPHICS_CAMERA_HANDLE_HPP
+#ifndef GRAPHICSLIB_CAMERA_HANDLE_HPP
+#define GRAPHICSLIB_CAMERA_HANDLE_HPP
 
 #include <Magnum/GL/DefaultFramebuffer.h>
 #include <Magnum/SceneGraph/Camera.h>
 
-// Check https://github.com/alexesDev/magnum-tips for additional tools
+// Inspired from https://github.com/alexesDev/magnum-tips
 namespace graphics_lib {
     namespace cameras {
         template <size_t N>
@@ -173,4 +173,4 @@ namespace graphics_lib {
     } // namespace cameras
 } // namespace graphics_lib
 
-#endif // SCIENCEGRAPHICS_CAMERA_HANDLE_HPP
+#endif // GRAPHICSLIB_CAMERA_HANDLE_HPP

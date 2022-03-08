@@ -22,8 +22,8 @@
     SOFTWARE.
 */
 
-#ifndef SCIENCEGRAPHICS_CAMERAS_HPP
-#define SCIENCEGRAPHICS_CAMERAS_HPP
+#ifndef GRAPHICSLIB_CAMERAS_HPP
+#define GRAPHICSLIB_CAMERAS_HPP
 
 namespace graphics_lib {
     namespace cameras {
@@ -34,4 +34,4 @@ namespace graphics_lib {
     } // namespace cameras
 } // namespace graphics_lib
 
-#endif // SCIENCEGRAPHICS_CAMERAS_HPP
+#endif // GRAPHICSLIB_CAMERAS_HPP

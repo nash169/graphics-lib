@@ -22,8 +22,8 @@
     SOFTWARE.
 */
 
-#ifndef SCIENCEGRAPHICS_OBJECTS_HPP
-#define SCIENCEGRAPHICS_OBJECTS_HPP
+#ifndef GRAPHICSLIB_OBJECTS_HPP
+#define GRAPHICSLIB_OBJECTS_HPP
 
 namespace graphics_lib {
     namespace objects {
@@ -34,4 +34,4 @@ namespace graphics_lib {
     } // namespace objects
 } // namespace graphics_lib
 
-#endif // SCIENCEGRAPHICS_OBJECTS_HPP
+#endif // GRAPHICSLIB_OBJECTS_HPP

@@ -22,8 +22,8 @@
     SOFTWARE.
 */
 
-#ifndef SCIENCEGRAPHICS_TEXTURE_DRAWABLE_HPP
-#define SCIENCEGRAPHICS_TEXTURE_DRAWABLE_HPP
+#ifndef GRAPHICSLIB_TEXTURE_DRAWABLE_HPP
+#define GRAPHICSLIB_TEXTURE_DRAWABLE_HPP
 
 #include "graphics_lib/drawbles/AbstractDrawable.hpp"
 #include <Magnum/GL/Texture.h>
@@ -71,4 +71,4 @@ namespace graphics_lib {
     } // namespace drawables
 } // namespace graphics_lib
 
-#endif // SCIENCEGRAPHICS_TEXTURE_DRAWABLE_HPP
+#endif // GRAPHICSLIB_TEXTURE_DRAWABLE_HPP

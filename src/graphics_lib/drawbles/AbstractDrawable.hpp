@@ -22,8 +22,8 @@
     SOFTWARE.
 */
 
-#ifndef SCIENCEGRAPHICS_ABSTRACT_DRAWABLE_HPP
-#define SCIENCEGRAPHICS_ABSTRACT_DRAWABLE_HPP
+#ifndef GRAPHICSLIB_ABSTRACT_DRAWABLE_HPP
+#define GRAPHICSLIB_ABSTRACT_DRAWABLE_HPP
 
 #include <Magnum/SceneGraph/Drawable.h>
 
@@ -57,4 +57,4 @@ namespace graphics_lib {
     } // namespace drawables
 } // namespace graphics_lib
 
-#endif // SCIENCEGRAPHICS_ABSTRACT_DRAWABLE_HPP
+#endif // GRAPHICSLIB_ABSTRACT_DRAWABLE_HPP
