@@ -117,6 +117,7 @@ namespace graphics_lib {
 
         // Import from file (return object parent of all the objects inside the file)
         objects::ObjectHandle3D& import(const std::string& file, const std::string& importer = "");
+        objects::ObjectHandle3D& import2(const std::string& file, const std::string& importer = "");
 
     protected:
         // Draw

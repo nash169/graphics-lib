@@ -32,7 +32,7 @@ int main(int argc, char** argv)
 
     std::string fname = (argc > 1) ? argv[1] : "rsc/franka/link0.dae";
 
-    app.import(fname);
+    app.import2(fname);
 
     app.addFrame()
         .setTransformation(Matrix4());

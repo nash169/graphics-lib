@@ -46,7 +46,8 @@
 /* IMPORTERS */
 #include <MagnumPlugins/AssimpImporter/AssimpImporter.h>
 
-/* DEBUGGER TOOLS */
+/* CORRADE TOOLS */
+#include <Corrade/Containers/Pair.h>
 #include <Corrade/Utility/DebugStl.h>
 
 /* GL TOOLS */
@@ -432,6 +433,160 @@ namespace graphics_lib {
         }
 
         return *_manipulator;
+    }
+
+    objects::ObjectHandle3D& Graphics::import2(const std::string& file, const std::string& importer)
+    {
+        // Set importer
+        if (!importer.empty())
+            _importer = _manager.loadAndInstantiate(importer);
+
+        // Check importer
+        if (!_importer)
+            std::exit(1);
+
+        // Import file
+        Debug{} << "Opening file" << file;
+        if (!_importer->openFile(file))
+            std::exit(4);
+
+        /* Textures */
+        Containers::Array<Containers::Optional<GL::Texture2D>> textures{_importer->textureCount()};
+
+        for (UnsignedInt i = 0; i != _importer->textureCount(); ++i) {
+            Debug{} << "Importing texture" << i << _importer->textureName(i);
+            Containers::Optional<Trade::TextureData> textureData = _importer->texture(i);
+            if (!textureData || textureData->type() != Trade::TextureType::Texture2D) {
+                Warning{} << "Cannot load texture properties, skipping";
+                continue;
+            }
+
+            Containers::Optional<Trade::ImageData2D> imageData = _importer->image2D(textureData->image());
+            if (!imageData || !imageData->isCompressed()) {
+                Warning{} << "Cannot load image" << textureData->image()
+                          << _importer->image2DName(textureData->image());
+                continue;
+            }
+
+            GL::Texture2D texture;
+            texture
+                .setMagnificationFilter(textureData->magnificationFilter())
+                .setMinificationFilter(textureData->minificationFilter(), textureData->mipmapFilter())
+                .setWrapping(textureData->wrapping().xy())
+                .setStorage(Math::log2(imageData->size().max()) + 1,
+                    GL::textureFormat(imageData->format()), imageData->size())
+                .setSubImage(0, {}, *imageData)
+                .generateMipmap();
+
+            textures[i] = std::move(texture);
+        }
+
+        /* Materials */
+        Containers::Array<Containers::Optional<Trade::PhongMaterialData>> materials{_importer->materialCount()};
+
+        for (UnsignedInt i = 0; i != _importer->materialCount(); ++i) {
+            Containers::Optional<Trade::MaterialData> materialData;
+            if (!(materialData = _importer->material(i))) {
+                Warning{} << "Cannot load material" << i
+                          << _importer->materialName(i);
+                continue;
+            }
+
+            materials[i] = std::move(*materialData).as<Trade::PhongMaterialData>();
+        }
+
+        /* Meshes */
+        Containers::Array<Containers::Optional<GL::Mesh>> meshes{_importer->meshCount()};
+
+        for (UnsignedInt i = 0; i != _importer->meshCount(); ++i) {
+            Containers::Optional<Trade::MeshData> meshData;
+            if (!(meshData = _importer->mesh(i))) {
+                Warning{} << "Cannot load mesh" << i << _importer->meshName(i);
+                continue;
+            }
+
+            MeshTools::CompileFlags flags;
+            if (meshData->hasAttribute(Trade::MeshAttribute::Normal))
+                flags |= MeshTools::CompileFlag::GenerateFlatNormals;
+            meshes[i] = MeshTools::compile(*meshData, flags);
+        }
+
+        /* The format has no scene support, display just the first loaded mesh with
+       a default material (if it's there) and be done with it. */
+        if (_importer->defaultScene() == -1) {
+            if (!meshes.isEmpty() && meshes[0]) {
+                auto it = _drawables3D.insert(std::make_pair(new objects::ObjectHandle3D(_manipulator, _drawables3D), nullptr));
+                if (it.second) {
+                    it.first->second = Containers::pointer<drawables::PhongDrawable3D>(*it.first->first, _phong3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("phong"));
+                    static_cast<drawables::PhongDrawable3D&>(it.first->second->setMesh(*meshes[0])).setColor(0xffffff_rgbf);
+                }
+                return *it.first->first;
+            }
+            return *_manipulator;
+        }
+
+        /* Load the scene */
+        Containers::Optional<Trade::SceneData> scene;
+        if (!(scene = _importer->scene(_importer->defaultScene())) || !scene->is3D() || !scene->hasField(Trade::SceneField::Parent) || !scene->hasField(Trade::SceneField::Mesh)) {
+            Fatal{} << "Cannot load scene" << _importer->defaultScene()
+                    << _importer->sceneName(_importer->defaultScene());
+        }
+
+        /* Allocate objects that are part of the hierarchy and assign parent references*/
+        Containers::Array<objects::ObjectHandle3D*> objects{std::size_t(scene->mappingBound())};
+        Containers::Array<Containers::Pair<UnsignedInt, Int>> parents
+            = scene->parentsAsArray();
+        for (const Containers::Pair<UnsignedInt, Int>& parent : parents)
+            objects[parent.first()] = new objects::ObjectHandle3D{parent.second() == -1 ? _manipulator : objects[parent.second()], _drawables3D};
+
+        /* Set transformations. Objects that are not part of the hierarchy are
+           ignored, objects that have no transformation entry retain an identity
+           transformation. */
+        for (const Containers::Pair<UnsignedInt, Matrix4>& transformation :
+            scene->transformations3DAsArray()) {
+            if (objects::ObjectHandle3D* object = objects[transformation.first()])
+                object->setTransformation(transformation.second());
+        }
+
+        /* Add drawables for objects that have a mesh, again ignoring objects that
+       are not part of the hierarchy. There can be multiple mesh assignments
+       for one object, simply add one drawable for each. */
+        for (const Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>&
+                 meshMaterial : scene->meshesMaterialsAsArray()) {
+
+            objects::ObjectHandle3D* object = objects[meshMaterial.first()];
+            auto it = _drawables3D.insert(std::make_pair(object, nullptr));
+            if (!it.second)
+                Fatal{} << "Cannot add object to drawables";
+
+            Containers::Optional<GL::Mesh>& mesh = meshes[meshMaterial.second().first()];
+            if (!object || !mesh)
+                continue;
+
+            Int materialId = meshMaterial.second().second();
+
+            /* Material not available / not loaded, use a default material */
+            if (materialId == -1 || !materials[materialId]) {
+                it.first->second = Containers::pointer<drawables::PhongDrawable3D>(*it.first->first, _phong3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("phong"));
+                static_cast<drawables::PhongDrawable3D&>(it.first->second->setMesh(*mesh))
+                    .setColor(0xffffff_rgbf); // Default color
+            }
+            /* Textured material, if the texture loaded correctly */
+            else if (materials[materialId]->hasAttribute(Trade::MaterialAttribute::DiffuseTexture) && textures[materials[materialId]->diffuseTexture()]) {
+                it.first->second = Containers::pointer<drawables::TextureDrawable3D>(*it.first->first, _texture3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("texture"));
+                static_cast<drawables::TextureDrawable3D&>(it.first->second->setMesh(*mesh))
+                    .setTexture(*textures[materials[materialId]->diffuseTexture()]);
+            }
+            /* Color-only material */
+            else {
+                it.first->second = Containers::pointer<drawables::PhongDrawable3D>(*it.first->first, _phong3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("phong"));
+                static_cast<drawables::PhongDrawable3D&>(it.first->second->setMesh(*mesh))
+                    .setColor(materials[materialId]->diffuseColor()); // set color by default but it should not be used
+                                                                      // .setMaterial(*materials[materialId]) // correct here (check with reference example)
+            }
+        }
+
+        return *objects[0];
     }
 
     void Graphics::drawEvent()
