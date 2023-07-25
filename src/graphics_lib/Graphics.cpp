@@ -103,14 +103,16 @@ namespace graphics_lib {
         // GL::Renderer::setPolygonOffset(2.0f, 0.5f);
 
         // Phong shader
-        _shadersManager.set<GL::AbstractShaderProgram>("phong", new Shaders::PhongGL{{}, 2});
+        _shadersManager.set<GL::AbstractShaderProgram>("phong",
+            new Shaders::PhongGL{Shaders::PhongGL::Configuration{}.setLightCount(2)});
         _shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("phong")
             ->setAmbientColor(0x111111_rgbf)
             .setSpecularColor(0xffffff_rgbf)
             .setShininess(80.0f);
 
         // Texture shader
-        _shadersManager.set<GL::AbstractShaderProgram>("texture", new Shaders::PhongGL(Shaders::PhongGL::Flag::DiffuseTexture, 2));
+        _shadersManager.set<GL::AbstractShaderProgram>("texture",
+            new Shaders::PhongGL(Shaders::PhongGL::Configuration{}.setFlags(Shaders::PhongGL::Flag::DiffuseTexture).setLightCount(2)));
         _shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("texture")
             ->setAmbientColor(0x111111_rgbf)
             .setSpecularColor(0x111111_rgbf)
@@ -441,54 +443,42 @@ namespace graphics_lib {
         if (!importer.empty())
             _importer = _manager.loadAndInstantiate(importer);
 
-        // Check importer
-        if (!_importer)
+        // Check importer & file
+        if (!_importer || !_importer->openFile(file))
             std::exit(1);
-
-        // Import file
-        Debug{} << "Opening file" << file;
-        if (!_importer->openFile(file))
-            std::exit(4);
 
         /* Textures */
         Containers::Array<Containers::Optional<GL::Texture2D>> textures{_importer->textureCount()};
-
         for (UnsignedInt i = 0; i != _importer->textureCount(); ++i) {
-            Debug{} << "Importing texture" << i << _importer->textureName(i);
             Containers::Optional<Trade::TextureData> textureData = _importer->texture(i);
             if (!textureData || textureData->type() != Trade::TextureType::Texture2D) {
-                Warning{} << "Cannot load texture properties, skipping";
+                Warning{} << "Cannot load texture" << i << _importer->textureName(i);
                 continue;
             }
 
             Containers::Optional<Trade::ImageData2D> imageData = _importer->image2D(textureData->image());
             if (!imageData || !imageData->isCompressed()) {
-                Warning{} << "Cannot load image" << textureData->image()
-                          << _importer->image2DName(textureData->image());
+                Warning{} << "Cannot load image" << textureData->image() << _importer->image2DName(textureData->image());
                 continue;
             }
 
-            GL::Texture2D texture;
-            texture
+            (*(textures[i] = GL::Texture2D{}))
                 .setMagnificationFilter(textureData->magnificationFilter())
-                .setMinificationFilter(textureData->minificationFilter(), textureData->mipmapFilter())
+                .setMinificationFilter(textureData->minificationFilter(),
+                    textureData->mipmapFilter())
                 .setWrapping(textureData->wrapping().xy())
                 .setStorage(Math::log2(imageData->size().max()) + 1,
                     GL::textureFormat(imageData->format()), imageData->size())
                 .setSubImage(0, {}, *imageData)
                 .generateMipmap();
-
-            textures[i] = std::move(texture);
         }
 
         /* Materials */
         Containers::Array<Containers::Optional<Trade::PhongMaterialData>> materials{_importer->materialCount()};
-
         for (UnsignedInt i = 0; i != _importer->materialCount(); ++i) {
             Containers::Optional<Trade::MaterialData> materialData;
             if (!(materialData = _importer->material(i))) {
-                Warning{} << "Cannot load material" << i
-                          << _importer->materialName(i);
+                Warning{} << "Cannot load material" << i << _importer->materialName(i);
                 continue;
             }
 
@@ -512,7 +502,7 @@ namespace graphics_lib {
         }
 
         /* The format has no scene support, display just the first loaded mesh with
-       a default material (if it's there) and be done with it. */
+           a default material (if it's there) and be done with it. */
         if (_importer->defaultScene() == -1) {
             if (!meshes.isEmpty() && meshes[0]) {
                 auto it = _drawables3D.insert(std::make_pair(new objects::ObjectHandle3D(_manipulator, _drawables3D), nullptr));
@@ -527,32 +517,35 @@ namespace graphics_lib {
 
         /* Load the scene */
         Containers::Optional<Trade::SceneData> scene;
-        if (!(scene = _importer->scene(_importer->defaultScene())) || !scene->is3D() || !scene->hasField(Trade::SceneField::Parent) || !scene->hasField(Trade::SceneField::Mesh)) {
-            Fatal{} << "Cannot load scene" << _importer->defaultScene()
-                    << _importer->sceneName(_importer->defaultScene());
-        }
+        if (!(scene = _importer->scene(_importer->defaultScene())) || !scene->is3D() || !scene->hasField(Trade::SceneField::Parent) || !scene->hasField(Trade::SceneField::Mesh))
+            Fatal{} << "Cannot load scene" << _importer->defaultScene() << _importer->sceneName(_importer->defaultScene());
 
-        /* Allocate objects that are part of the hierarchy and assign parent references*/
+        /* Allocate objects that are part of the hierarchy & assign parent references*/
         Containers::Array<objects::ObjectHandle3D*> objects{std::size_t(scene->mappingBound())};
-        Containers::Array<Containers::Pair<UnsignedInt, Int>> parents
-            = scene->parentsAsArray();
-        for (const Containers::Pair<UnsignedInt, Int>& parent : parents)
-            objects[parent.first()] = new objects::ObjectHandle3D{parent.second() == -1 ? _manipulator : objects[parent.second()], _drawables3D};
+        Containers::Array<Containers::Pair<UnsignedInt, Int>> parents = scene->parentsAsArray();
+
+        // Here we create a handle object to control all the ones loaded from the file
+        // without having to pass through the manipulator object
+        auto handle_object = new objects::ObjectHandle3D(_manipulator, _drawables3D);
+
+        for (const Containers::Pair<UnsignedInt, Int>& parent : parents) {
+            // std::cout << "Object: " << parent.first() << std::endl;
+            // std::cout << "Parent: " << parent.second() << std::endl;
+            objects[parent.first()] = new objects::ObjectHandle3D{parent.second() == -1 ? handle_object : objects[parent.second()], _drawables3D};
+        }
 
         /* Set transformations. Objects that are not part of the hierarchy are
            ignored, objects that have no transformation entry retain an identity
            transformation. */
-        for (const Containers::Pair<UnsignedInt, Matrix4>& transformation :
-            scene->transformations3DAsArray()) {
+        for (const Containers::Pair<UnsignedInt, Matrix4>& transformation : scene->transformations3DAsArray()) {
             if (objects::ObjectHandle3D* object = objects[transformation.first()])
                 object->setTransformation(transformation.second());
         }
 
         /* Add drawables for objects that have a mesh, again ignoring objects that
-       are not part of the hierarchy. There can be multiple mesh assignments
-       for one object, simply add one drawable for each. */
-        for (const Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>&
-                 meshMaterial : scene->meshesMaterialsAsArray()) {
+           are not part of the hierarchy. There can be multiple mesh assignments
+           for one object, simply add one drawable for each. */
+        for (const Containers::Pair<UnsignedInt, Containers::Pair<UnsignedInt, Int>>& meshMaterial : scene->meshesMaterialsAsArray()) {
 
             objects::ObjectHandle3D* object = objects[meshMaterial.first()];
             auto it = _drawables3D.insert(std::make_pair(object, nullptr));
@@ -586,7 +579,7 @@ namespace graphics_lib {
             }
         }
 
-        return *objects[0];
+        return *handle_object;
     }
 
     void Graphics::drawEvent()
@@ -616,7 +609,7 @@ namespace graphics_lib {
         objects::ObjectHandle3D& parent, UnsignedInt i)
     {
         /* Import the object information */
-        Debug{} << "Importing object" << i << _importer->object3DName(i);
+        Debug{} << "Importing object" << i << _importer->objectName(i);
         Containers::Pointer<Trade::ObjectData3D> objectData = _importer->object3D(i);
         if (!objectData) {
             Error{} << "Cannot import object, skipping";
