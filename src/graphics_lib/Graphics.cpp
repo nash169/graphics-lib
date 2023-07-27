@@ -165,29 +165,36 @@ namespace graphics_lib {
         // handle object
         auto handle_obj = new objects::ObjectHandle3D(_manipulator, _drawables3D);
 
-        // data
+        // vertices & indices
         struct VertexData {
             Vector3 position;
             Color3 color;
         };
-        Containers::Array<VertexData> data;
+        Containers::Array<VertexData> vertices;
+        Containers::Array<UnsignedShort> indices;
 
         for (size_t i = 0; i < trajectory.rows(); i++) {
             Eigen::Vector3f vertex = trajectory.row(i).cast<float>();
-            arrayAppend(data, Corrade::InPlaceInit, Vector3(vertex), Color3::green());
+            arrayAppend(vertices, Corrade::InPlaceInit, Vector3(vertex), Color3::green());
+            arrayAppend(indices, Corrade::InPlaceInit, i);
+            arrayAppend(indices, Corrade::InPlaceInit, i+1);
         }
+        arrayAppend(indices, indices.size() - 1);
 
-        // Create buffer
-        GL::Buffer buffer;
-        buffer.setData(data);
+        // Vertex buffer
+        GL::Buffer vertex_buffer;
+        vertex_buffer.setData(vertices);
+
+        // Index buffer
+        GL::Buffer index_buffer;
+        index_buffer.setData(indices);
 
         // Create mesh
         GL::Mesh mesh;
         mesh.setPrimitive(MeshPrimitive::Lines)
-            .setCount(data.size())
-            .addVertexBuffer(std::move(buffer), 0,
-                Shaders::VertexColorGL3D::Position{},
-                Shaders::VertexColorGL3D::Color3{});
+            .setCount(indices.size())
+            .addVertexBuffer(std::move(vertex_buffer), 0, Shaders::VertexColorGL3D::Position{}, Shaders::VertexColorGL3D::Color3{})
+            .setIndexBuffer(std::move(index_buffer), 0, MeshIndexType::UnsignedShort);
 
         // Create object connected to drawable
         auto it = _drawables3D.insert(std::make_pair(new objects::ObjectHandle3D(handle_obj, _drawables3D), nullptr));
@@ -228,6 +235,8 @@ namespace graphics_lib {
         std::pair<Containers::Array<char>, MeshIndexType> compressed = MeshTools::compressIndices(mesh_data.indicesAsArray());
         GL::Buffer indices;
         indices.setData(compressed.first);
+
+        Debug{} << mesh_data.indexCount();
 
         // Mesh
         GL::Mesh mesh;

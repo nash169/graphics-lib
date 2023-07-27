@@ -57,6 +57,8 @@ int main(int argc, char** argv)
 
     app.addTrajectory(traj);
 
+    // app.addPrimitive("cube");
+
     // app.addFrame();
 
     return app.exec();
