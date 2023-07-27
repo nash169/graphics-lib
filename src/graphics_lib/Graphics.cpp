@@ -32,6 +32,7 @@
 #include <Magnum/Primitives/Cylinder.h>
 #include <Magnum/Primitives/Gradient.h>
 #include <Magnum/Primitives/Icosphere.h>
+#include <Magnum/Primitives/Line.h>
 
 /* MATH */
 #include "graphics_lib/tools/math.hpp"
@@ -156,6 +157,51 @@ namespace graphics_lib {
         }
 
         return *it.first->first;
+    }
+
+    // Add trajectory (only 3D for the moment)
+    objects::ObjectHandle3D& Graphics::addTrajectory(const Eigen::Matrix<double, Eigen::Dynamic, 3>& trajectory, const std::string& color_to_set)
+    {
+        // handle object
+        auto handle_obj = new objects::ObjectHandle3D(_manipulator, _drawables3D);
+
+        // data
+        struct VertexData {
+            Vector3 position;
+            Color3 color;
+        };
+        Containers::Array<VertexData> data;
+
+        for (size_t i = 0; i < trajectory.rows(); i++) {
+            Eigen::Vector3f vertex = trajectory.row(i).cast<float>();
+            arrayAppend(data, Corrade::InPlaceInit, Vector3(vertex), Color3::green());
+        }
+
+        // Create buffer
+        GL::Buffer buffer;
+        buffer.setData(data);
+
+        // Create mesh
+        GL::Mesh mesh;
+        mesh.setPrimitive(MeshPrimitive::Lines)
+            .setCount(data.size())
+            .addVertexBuffer(std::move(buffer), 0,
+                Shaders::VertexColorGL3D::Position{},
+                Shaders::VertexColorGL3D::Color3{});
+
+        // Create object connected to drawable
+        auto it = _drawables3D.insert(std::make_pair(new objects::ObjectHandle3D(handle_obj, _drawables3D), nullptr));
+
+        // Add drawable
+        if (it.second) {
+            // Create drawable
+            it.first->second = Containers::pointer<drawables::ColorDrawable3D>(*it.first->first, _color3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::VertexColorGL3D>("color3D"));
+
+            // Set drawable mesh
+            it.first->second->setMesh(mesh);
+        }
+
+        return *handle_obj;
     }
 
     // Add primitive
@@ -534,14 +580,6 @@ namespace graphics_lib {
             objects[parent.first()] = new objects::ObjectHandle3D{parent.second() == -1 ? handle_object : objects[parent.second()], _drawables3D};
         }
 
-        /* Set transformations. Objects that are not part of the hierarchy are
-           ignored, objects that have no transformation entry retain an identity
-           transformation. */
-        for (const Containers::Pair<UnsignedInt, Matrix4>& transformation : scene->transformations3DAsArray()) {
-            if (objects::ObjectHandle3D* object = objects[transformation.first()])
-                object->setTransformation(transformation.second());
-        }
-
         /* Add drawables for objects that have a mesh, again ignoring objects that
            are not part of the hierarchy. There can be multiple mesh assignments
            for one object, simply add one drawable for each. */
@@ -577,6 +615,14 @@ namespace graphics_lib {
                     .setColor(materials[materialId]->diffuseColor()); // set color by default but it should not be used
                                                                       // .setMaterial(*materials[materialId]) // correct here (check with reference example)
             }
+        }
+
+        /* Set transformations. Objects that are not part of the hierarchy are
+           ignored, objects that have no transformation entry retain an identity
+           transformation. */
+        for (const Containers::Pair<UnsignedInt, Matrix4>& transformation : scene->transformations3DAsArray()) {
+            if (objects::ObjectHandle3D* object = objects[transformation.first()])
+                object->addPriorTransformation(transformation.second());
         }
 
         return *handle_object;

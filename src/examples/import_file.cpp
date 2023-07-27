@@ -23,20 +23,41 @@
 */
 
 #include <graphics_lib/Graphics.hpp>
+#include <utils_lib/FileManager.hpp>
 
 using namespace graphics_lib;
+using namespace utils_lib;
 
 int main(int argc, char** argv)
 {
     Graphics app({argc, argv});
 
-    std::string fname = (argc > 1) ? argv[1] : "rsc/franka/link0.dae";
+    auto prior = Matrix4(Vector4{1, 0, 0, 0},
+        Vector4{0, 0, 1, 0},
+        Vector4{0, -1, 0, 0},
+        Vector4{0, 0, 0, 1});
+
+    std::string fname = (argc > 1) ? argv[1] : "rsc/franka/link5.dae";
 
     // app.import(fname).setTransformation(Matrix4::translation(Vector3{0.0, -1.0, 0.0}));
-    app.import2(fname).setTransformation(Matrix4::translation(Vector3{0.0, 0.5, 0.0}));
+    // app.import(fname).addPriorTransformation(prior);
+    // app.import2(fname).addPriorTransformation(prior);
 
     // app.addFrame()
-    //     .setTransformation();
+    //     .setTransformation(prior);
+
+    FileManager mng;
+    Eigen::MatrixXd traj = mng.setFile("rsc/data/trajectory.csv").read<Eigen::MatrixXd>();
+
+    // std::cout << traj << std::endl;
+
+    // Eigen::MatrixXd traj(2, 3);
+    // traj << 0, 0, 0,
+    //     1, 1, 1;
+
+    app.addTrajectory(traj);
+
+    // app.addFrame();
 
     return app.exec();
 }

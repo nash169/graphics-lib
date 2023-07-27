@@ -106,6 +106,9 @@ namespace graphics_lib {
         // Cartesian frame
         objects::ObjectHandle3D& addFrame();
 
+        // Add trajectory
+        objects::ObjectHandle3D& addTrajectory(const Eigen::Matrix<double, Eigen::Dynamic, 3>& trajectory, const std::string& color_to_set = "white");
+
         // Add primitive
         objects::ObjectHandle3D& addPrimitive(const std::string& primitive);
 
