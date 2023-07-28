@@ -132,13 +132,20 @@ namespace graphics_lib {
 
         redraw();
     }
+
+    Graphics::~Graphics()
+        {
+            _drawables3D.clear();
+            _drawables2D.clear();
+        }
+
     Graphics& Graphics::setBackground(const std::string& colorname)
     {
         GL::Renderer::setClearColor(tools::color(colorname));
         return *this;
     }
 
-    objects::ObjectHandle3D& Graphics::addFrame()
+    objects::ObjectHandle3D& Graphics::frame()
     {
         auto axis_mesh = Primitives::axis3D();
 
@@ -160,7 +167,7 @@ namespace graphics_lib {
     }
 
     // Add trajectory (only 3D for the moment)
-    objects::ObjectHandle3D& Graphics::addTrajectory(const Eigen::Matrix<double, Eigen::Dynamic, 3>& trajectory, const std::string& color_to_set)
+    objects::ObjectHandle3D& Graphics::trajectory(const Eigen::Matrix<double, Eigen::Dynamic, 3>& trajectory, const std::string& color_to_set)
     {
         // handle object
         auto handle_obj = new objects::ObjectHandle3D(_manipulator, _drawables3D);
@@ -212,7 +219,7 @@ namespace graphics_lib {
     }
 
     // Add primitive
-    objects::ObjectHandle3D& Graphics::addPrimitive(const std::string& primitive)
+    objects::ObjectHandle3D& Graphics::primitive(const std::string& primitive)
     {
         // Default mesh cube
         Trade::MeshData mesh_data = Primitives::cubeSolid();
@@ -235,8 +242,6 @@ namespace graphics_lib {
         std::pair<Containers::Array<char>, MeshIndexType> compressed = MeshTools::compressIndices(mesh_data.indicesAsArray());
         GL::Buffer indices;
         indices.setData(compressed.first);
-
-        Debug{} << mesh_data.indexCount();
 
         // Mesh
         GL::Mesh mesh;
@@ -262,60 +267,8 @@ namespace graphics_lib {
         return *it.first->first;
     }
 
-    objects::ObjectHandle2D& Graphics::colorbar(const double& min, const double& max, const std::string& colorset)
-    {
-        // Map
-        const auto map = colormap(colorset);
-
-        // Ticks
-        Eigen::Matrix<double, 10, 1> ticks = Eigen::VectorXd::LinSpaced(10, min, max);
-
-        // Colors
-        Eigen::Matrix<int, 10, 1> colors_index = Eigen::VectorXi::LinSpaced(10, 0, 255);
-
-        // Vertices
-        struct VertexData {
-            Vector2 position;
-            Color3 color;
-        };
-
-        Containers::Array<VertexData> vertices;
-        for (size_t i = 0; i < 9; i++) {
-            // lower triangle
-            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{0, float(i) - 1}, Color3::fromSrgb(map[colors_index[i]]));
-            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{1, float(i) - 1}, Color3::fromSrgb(map[colors_index[i]]));
-            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{1, float(i + 1) - 1}, Color3::fromSrgb(map[colors_index[i + 1]]));
-
-            // upper triangle
-            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{0, float(i) - 1}, Color3::fromSrgb(map[colors_index[i]]));
-            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{1, float(i + 1) - 1}, Color3::fromSrgb(map[colors_index[i + 1]]));
-            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{0, float(i + 1) - 1}, Color3::fromSrgb(map[colors_index[i + 1]]));
-        }
-
-        // Mesh
-        GL::Mesh mesh;
-        mesh.setCount(Containers::arraySize(vertices))
-            .addVertexBuffer(GL::Buffer{vertices}, 0,
-                Shaders::VertexColorGL2D::Position{},
-                Shaders::VertexColorGL2D::Color3{});
-
-        // Object and drawable feature
-        auto it = _drawables2D.insert(std::make_pair(new objects::ObjectHandle2D(&_scene2D, _drawables2D), nullptr));
-
-        // Add drawable
-        if (it.second) {
-            // Create drawable
-            it.first->second = Containers::pointer<drawables::ColorDrawable2D>(*it.first->first, _color2D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::VertexColorGL2D>("color2D"));
-
-            // Set drawable mesh
-            it.first->second->setMesh(mesh);
-        }
-
-        return *it.first->first;
-    }
-
     // Plot from vertices and indices matrices
-    objects::ObjectHandle3D& Graphics::surf(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& function, const Eigen::MatrixXd& indices, const double& min, const double& max, const std::string& colorset)
+    objects::ObjectHandle3D& Graphics::surface(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& function, const Eigen::MatrixXd& indices, const double& min, const double& max, const std::string& colorset)
     {
         // Colormap
         const auto map = colormap(colorset);
@@ -364,135 +317,7 @@ namespace graphics_lib {
         return *it.first->first;
     }
 
-    // Add from file
     objects::ObjectHandle3D& Graphics::import(const std::string& file, const std::string& importer)
-    {
-        // Set importer
-        if (!importer.empty())
-            _importer = _manager.loadAndInstantiate(importer);
-
-        // Check importer
-        if (!_importer)
-            std::exit(1);
-
-        // Import file
-        Debug{} << "Opening file" << file;
-        if (!_importer->openFile(file))
-            std::exit(4);
-
-        /* Textures */
-        Containers::Array<Containers::Optional<GL::Texture2D>> textures{_importer->textureCount()};
-
-        for (UnsignedInt i = 0; i != _importer->textureCount(); ++i) {
-            // Import texture
-            Debug{} << "Importing texture" << i << _importer->textureName(i);
-            Containers::Optional<Trade::TextureData> textureData = _importer->texture(i);
-            if (!textureData || textureData->type() != Trade::TextureType::Texture2D) {
-                Warning{} << "Cannot load texture properties, skipping";
-                continue;
-            }
-
-            // Import image
-            Debug{} << "Importing image" << textureData->image() << _importer->image2DName(textureData->image());
-            Containers::Optional<Trade::ImageData2D> imageData = _importer->image2D(textureData->image());
-            GL::TextureFormat format;
-            if (imageData && imageData->format() == PixelFormat::RGB8Unorm)
-                format = GL::TextureFormat::RGB8;
-            else if (imageData && imageData->format() == PixelFormat::RGBA8Unorm)
-                format = GL::TextureFormat::RGBA8;
-            else {
-                Warning{} << "Cannot load texture image, skipping";
-                continue;
-            }
-
-            /* Configure the texture */
-            GL::Texture2D texture;
-            texture
-                .setMagnificationFilter(textureData->magnificationFilter())
-                .setMinificationFilter(textureData->minificationFilter(), textureData->mipmapFilter())
-                .setWrapping(textureData->wrapping().xy())
-                .setStorage(Math::log2(imageData->size().max()) + 1, format, imageData->size())
-                .setSubImage(0, {}, *imageData)
-                .generateMipmap();
-
-            textures[i] = std::move(texture);
-        }
-
-        /* Materials */
-        Containers::Array<Containers::Optional<Trade::PhongMaterialData>> materials{_importer->materialCount()};
-
-        for (UnsignedInt i = 0; i != _importer->materialCount(); ++i) {
-            Debug{} << "Importing material" << i << _importer->materialName(i);
-
-            Containers::Optional<Trade::MaterialData> materialData = _importer->material(i);
-            if (!materialData || materialData->types() != Trade::MaterialType::Phong) {
-                Warning{} << "Cannot load material, skipping";
-                continue;
-            }
-
-            materials[i] = std::move(static_cast<Trade::PhongMaterialData&>(*materialData));
-        }
-
-        /* Meshes */
-        Containers::Array<Containers::Optional<GL::Mesh>> meshes{_importer->meshCount()};
-
-        for (UnsignedInt i = 0; i != _importer->meshCount(); ++i) {
-            Debug{} << "Importing mesh" << i << _importer->meshName(i);
-
-            Containers::Optional<Trade::MeshData> meshData = _importer->mesh(i);
-            if (!meshData || !meshData->hasAttribute(Trade::MeshAttribute::Normal) || meshData->primitive() != MeshPrimitive::Triangles) {
-                Warning{} << "Cannot load the mesh, skipping";
-                continue;
-            }
-
-            /* Compile the mesh */
-            meshes[i] = MeshTools::compile(*meshData);
-        }
-
-        /* Load the scene */
-        if (_importer->defaultScene() != -1) {
-            Debug{} << "Adding default scene" << _importer->sceneName(_importer->defaultScene());
-
-            Containers::Optional<Trade::SceneData> sceneData = _importer->scene(_importer->defaultScene());
-            if (!sceneData) {
-                Error{} << "Cannot load scene, exiting";
-            }
-            else {
-                // check how to do this
-                auto ctrObj = new objects::ObjectHandle3D(_manipulator, _drawables3D);
-
-                /* Recursively add all children */
-                for (UnsignedInt objectId : sceneData->children3D())
-                    addObject(meshes, textures, materials, *ctrObj, objectId);
-
-                /* Set prior transformation  */
-                for (auto& child : ctrObj->children())
-                    transformation2Prior(static_cast<objects::ObjectHandle3D*>(&child), ctrObj->transformation());
-
-                return *ctrObj;
-            }
-        }
-        /* The format has no scene support, display just the first loaded mesh with a default material and be done with it */
-        else if (!meshes.empty() && meshes[0]) {
-            // Create object
-            auto it = _drawables3D.insert(std::make_pair(new objects::ObjectHandle3D(_manipulator, _drawables3D), nullptr));
-
-            // Add drawable
-            if (it.second) {
-                // Create drawable
-                it.first->second = Containers::pointer<drawables::PhongDrawable3D>(*it.first->first, _phong3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("phong"));
-
-                // Set drawable mesh and default color
-                static_cast<drawables::PhongDrawable3D&>(it.first->second->setMesh(*meshes[0])).setColor(0xffffff_rgbf);
-            }
-
-            return *it.first->first;
-        }
-
-        return *_manipulator;
-    }
-
-    objects::ObjectHandle3D& Graphics::import2(const std::string& file, const std::string& importer)
     {
         // Set importer
         if (!importer.empty())
@@ -637,6 +462,58 @@ namespace graphics_lib {
         return *handle_object;
     }
 
+    objects::ObjectHandle2D& Graphics::colorbar(const double& min, const double& max, const std::string& colorset)
+    {
+        // Map
+        const auto map = colormap(colorset);
+
+        // Ticks
+        Eigen::Matrix<double, 10, 1> ticks = Eigen::VectorXd::LinSpaced(10, min, max);
+
+        // Colors
+        Eigen::Matrix<int, 10, 1> colors_index = Eigen::VectorXi::LinSpaced(10, 0, 255);
+
+        // Vertices
+        struct VertexData {
+            Vector2 position;
+            Color3 color;
+        };
+
+        Containers::Array<VertexData> vertices;
+        for (size_t i = 0; i < 9; i++) {
+            // lower triangle
+            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{0, float(i) - 1}, Color3::fromSrgb(map[colors_index[i]]));
+            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{1, float(i) - 1}, Color3::fromSrgb(map[colors_index[i]]));
+            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{1, float(i + 1) - 1}, Color3::fromSrgb(map[colors_index[i + 1]]));
+
+            // upper triangle
+            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{0, float(i) - 1}, Color3::fromSrgb(map[colors_index[i]]));
+            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{1, float(i + 1) - 1}, Color3::fromSrgb(map[colors_index[i + 1]]));
+            arrayAppend(vertices, Corrade::InPlaceInit, 0.5 * Vector2{0, float(i + 1) - 1}, Color3::fromSrgb(map[colors_index[i + 1]]));
+        }
+
+        // Mesh
+        GL::Mesh mesh;
+        mesh.setCount(Containers::arraySize(vertices))
+            .addVertexBuffer(GL::Buffer{vertices}, 0,
+                Shaders::VertexColorGL2D::Position{},
+                Shaders::VertexColorGL2D::Color3{});
+
+        // Object and drawable feature
+        auto it = _drawables2D.insert(std::make_pair(new objects::ObjectHandle2D(&_scene2D, _drawables2D), nullptr));
+
+        // Add drawable
+        if (it.second) {
+            // Create drawable
+            it.first->second = Containers::pointer<drawables::ColorDrawable2D>(*it.first->first, _color2D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::VertexColorGL2D>("color2D"));
+
+            // Set drawable mesh
+            it.first->second->setMesh(mesh);
+        }
+
+        return *it.first->first;
+    }
+
     void Graphics::drawEvent()
     {
         GL::defaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
@@ -656,90 +533,6 @@ namespace graphics_lib {
         swapBuffers();
 
         redraw();
-    }
-
-    void Graphics::addObject(Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
-        Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
-        Containers::ArrayView<Containers::Optional<Trade::PhongMaterialData>> materials,
-        objects::ObjectHandle3D& parent, UnsignedInt i)
-    {
-        /* Import the object information */
-        Debug{} << "Importing object" << i << _importer->objectName(i);
-        Containers::Pointer<Trade::ObjectData3D> objectData = _importer->object3D(i);
-        if (!objectData) {
-            Error{} << "Cannot import object, skipping";
-            return;
-        }
-
-        /* Create 3D object */
-        auto object = new objects::ObjectHandle3D(&parent, _drawables3D);
-
-        /* Object transformation */
-        object->setTransformation(objectData->transformation());
-
-        /* Add a drawable if the object has a mesh and the mesh is loaded */
-        if (objectData->instanceType() == Trade::ObjectInstanceType3D::Mesh && objectData->instance() != -1 && meshes[objectData->instance()]) {
-            // Add object to the unordered map
-            auto it = _drawables3D.insert(std::make_pair(object, nullptr));
-
-            if (it.second) {
-                const Int materialId = static_cast<Trade::MeshObjectData3D*>(objectData.get())->material();
-
-                /* Material not available / not loaded, use a default material */
-                if (materialId == -1 || !materials[materialId]) {
-                    it.first->second = Containers::pointer<drawables::PhongDrawable3D>(*it.first->first, _phong3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("phong"));
-
-                    static_cast<drawables::PhongDrawable3D&>(it.first->second->setMesh(*meshes[objectData->instance()]))
-                        .setColor(0xffffff_rgbf); // Default color
-                }
-                /* Textured material. If the texture failed to load, again just use adefault colored material. */
-                else if (materials[materialId]->hasAttribute(Trade::MaterialAttribute::DiffuseTexture)) {
-                    Containers::Optional<GL::Texture2D>& texture = textures[materials[materialId]->diffuseTexture()];
-
-                    if (texture) {
-                        it.first->second = Containers::pointer<drawables::TextureDrawable3D>(*it.first->first, _texture3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("texture"));
-                        static_cast<drawables::TextureDrawable3D&>(it.first->second->setMesh(*meshes[objectData->instance()]))
-                            .setTexture(*texture);
-                    }
-                    else {
-                        it.first->second = Containers::pointer<drawables::PhongDrawable3D>(*it.first->first, _phong3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("phong"));
-                        static_cast<drawables::PhongDrawable3D&>(it.first->second->setMesh(*meshes[objectData->instance()]))
-                            .setColor(0xffffff_rgbf);
-                    }
-                }
-                /* Not textured material */
-                else {
-                    it.first->second = Containers::pointer<drawables::PhongDrawable3D>(*it.first->first, _phong3D, *_shadersManager.get<GL::AbstractShaderProgram, Shaders::PhongGL>("phong"));
-
-                    static_cast<drawables::PhongDrawable3D&>(it.first->second->setMesh(*meshes[objectData->instance()]))
-                        .setColor(materials[materialId]->diffuseColor()); // set color by default but it should not be used
-                                                                          // .setMaterial(*materials[materialId]) // correct here (check with reference example)
-                }
-            }
-        }
-
-        /* Recursively add children */
-        for (std::size_t id : objectData->children())
-            addObject(meshes, textures, materials, *object, id);
-    }
-
-    bool Graphics::transformation2Prior(objects::ObjectHandle3D* obj, Matrix4 transformation)
-    {
-        // Transformation
-        transformation = transformation * obj->transformation();
-
-        // Set prior transformation for the (drawable feature)
-        for (auto& feature : obj->features())
-            static_cast<drawables::AbstractDrawable3D&>(feature).addPriorTransformation(transformation);
-
-        // Reset tranformation
-        obj->resetTransformation();
-
-        // Recursion
-        for (auto& child : obj->children())
-            transformation2Prior(static_cast<objects::ObjectHandle3D*>(&child), transformation);
-
-        return true;
     }
 
     Containers::StaticArrayView<256, const Vector3ub> Graphics::colormap(const std::string& map) const

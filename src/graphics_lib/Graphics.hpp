@@ -83,14 +83,11 @@ namespace graphics_lib {
     class Graphics : public Platform::Application {
     public:
         explicit Graphics(const Arguments& arguments);
+        ~Graphics();
 
-        ~Graphics()
-        {
-            _drawables3D.clear();
-            _drawables2D.clear();
-        }
+        /* GETTERS ======================================== */
 
-        // Get camera
+        // Get camera objects
         cameras::CameraHandle3D& camera3D() { return *_cameraTemp3D; }
         cameras::CameraHandle2D& camera2D() { return *_cameraTemp2D; }
 
@@ -100,40 +97,42 @@ namespace graphics_lib {
         // Get number objects
         size_t numObjects() const { return _drawables3D.size() + _drawables2D.size(); }
 
+        /* ================================================== */
+
+        
+        /* SETTERS ======================================== */
+
         // Set window background
         Graphics& setBackground(const std::string& colorname);
 
-        // Cartesian frame
-        objects::ObjectHandle3D& addFrame();
+        /* ================================================== */
 
-        // Add trajectory
-        objects::ObjectHandle3D& addTrajectory(const Eigen::Matrix<double, Eigen::Dynamic, 3>& trajectory, const std::string& color_to_set = "white");
 
-        // Add primitive
-        objects::ObjectHandle3D& addPrimitive(const std::string& primitive);
+        /* DRAWINGS ======================================== */
 
-        // Colorbar (attached to the window)
+        // Draw a 3D Cartesian frame
+        objects::ObjectHandle3D& frame();
+
+        // Draw a 3D trajectory
+        objects::ObjectHandle3D& trajectory(const Eigen::Matrix<double, Eigen::Dynamic, 3>& trajectory, const std::string& color_to_set = "white");
+
+        // Draw a 3D primitive shape
+        objects::ObjectHandle3D& primitive(const std::string& primitive);
+
+        // Draw a 2D (gradient colored) surface
+        objects::ObjectHandle3D& surface(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& fun, const Eigen::MatrixXd& indices, const double& min = -1, const double& max = 1, const std::string& colormap = "turbo");
+
+        // Draw from file (return object parent of all the objects inside the file)
+        objects::ObjectHandle3D& import(const std::string& file, const std::string& importer = "");
+
+        // Draw a 2Dcolorbar (attached to the window)
         objects::ObjectHandle2D& colorbar(const double& min, const double& max, const std::string& colormap = "turbo");
 
-        // To plot a surface basically but it can be more general
-        objects::ObjectHandle3D& surf(const Eigen::MatrixXd& vertices, const Eigen::VectorXd& fun, const Eigen::MatrixXd& indices, const double& min = -1, const double& max = 1, const std::string& colormap = "turbo");
-
-        // Import from file (return object parent of all the objects inside the file)
-        objects::ObjectHandle3D& import(const std::string& file, const std::string& importer = "");
-        objects::ObjectHandle3D& import2(const std::string& file, const std::string& importer = "");
+        /* ================================================== */
 
     protected:
         // Draw
         void drawEvent() override;
-
-        // Recursively add objects from meshes
-        void addObject(Containers::ArrayView<Containers::Optional<GL::Mesh>> meshes,
-            Containers::ArrayView<Containers::Optional<GL::Texture2D>> textures,
-            Containers::ArrayView<Containers::Optional<Trade::PhongMaterialData>> materials,
-            objects::ObjectHandle3D& parent, UnsignedInt i);
-
-        // Transmit transformation
-        bool transformation2Prior(objects::ObjectHandle3D* obj, Matrix4 transformation);
 
         // Colormap
         Containers::StaticArrayView<256, const Vector3ub> colormap(const std::string& map) const;
