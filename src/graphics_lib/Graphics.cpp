@@ -68,7 +68,6 @@
 /* TRADE TOOLS */
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/MeshData.h>
-#include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
 
@@ -134,10 +133,10 @@ namespace graphics_lib {
     }
 
     Graphics::~Graphics()
-        {
-            _drawables3D.clear();
-            _drawables2D.clear();
-        }
+    {
+        _drawables3D.clear();
+        _drawables2D.clear();
+    }
 
     Graphics& Graphics::setBackground(const std::string& colorname)
     {
@@ -183,8 +182,8 @@ namespace graphics_lib {
         for (size_t i = 0; i < trajectory.rows(); i++) {
             Eigen::Vector3f vertex = trajectory.row(i).cast<float>();
             arrayAppend(vertices, Corrade::InPlaceInit, Vector3(vertex), Color3::green());
-            arrayAppend(indices, Corrade::InPlaceInit, i);
-            arrayAppend(indices, Corrade::InPlaceInit, i+1);
+            arrayAppend(indices, i);
+            arrayAppend(indices, i + 1);
         }
         arrayAppend(indices, indices.size() - 1);
 
