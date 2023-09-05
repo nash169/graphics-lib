@@ -99,7 +99,6 @@ namespace graphics_lib {
 
         /* ================================================== */
 
-        
         /* SETTERS ======================================== */
 
         // Set window background
@@ -107,14 +106,13 @@ namespace graphics_lib {
 
         /* ================================================== */
 
-
         /* DRAWINGS ======================================== */
 
         // Draw a 3D Cartesian frame
         objects::ObjectHandle3D& frame();
 
         // Draw a 3D trajectory
-        objects::ObjectHandle3D& trajectory(const Eigen::Matrix<double, Eigen::Dynamic, 3>& trajectory, const std::string& color_to_set = "white");
+        objects::ObjectHandle3D& trajectory(const Eigen::Matrix<double, Eigen::Dynamic, 3>& trajectory, const std::string& color_to_set = "green");
 
         // Draw a 3D primitive shape
         objects::ObjectHandle3D& primitive(const std::string& primitive);
