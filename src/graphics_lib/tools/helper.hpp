@@ -28,29 +28,30 @@
 namespace graphics_lib {
     namespace tools {
         // Get colors
-        inline Color4 color(const std::string& color)
+        template <typename ColorType = Color4>
+        inline ColorType color(const std::string& color)
         {
             if (!color.compare("red"))
-                return Color4::red();
+                return ColorType::red();
             else if (!color.compare("green"))
-                return Color4::green();
+                return ColorType::green();
             else if (!color.compare("blue"))
-                return Color4::blue();
+                return ColorType::blue();
             else if (!color.compare("cyan"))
-                return Color4::cyan();
+                return ColorType::cyan();
             else if (!color.compare("magenta"))
-                return Color4::magenta();
+                return ColorType::magenta();
             else if (!color.compare("yellow"))
-                return Color4::yellow();
+                return ColorType::yellow();
             else if (!color.compare("white"))
-                return Color4(0xffffff_rgbf);
+                return ColorType(0xffffff_rgbf);
             else if (!color.compare("grey"))
-                return Color4(0x585858_rgbf);
+                return ColorType(0x585858_rgbf);
             else if (!color.compare("black"))
-                return Color4();
+                return ColorType();
             else {
                 std::cerr << "Color not found; setting default color WHITE." << std::endl;
-                return Color4(0xffffff_rgbf);
+                return ColorType(0xffffff_rgbf);
             }
         }
     } // namespace tools
