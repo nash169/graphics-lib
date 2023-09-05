@@ -34,8 +34,9 @@ int main(int argc, char** argv)
 
     FileManager mng;
     Eigen::MatrixXd traj = mng.setFile("rsc/trajectory.csv").read<Eigen::MatrixXd>();
+    traj.rowwise() += Eigen::RowVector3d(0.5, 0.0, 0.0);
 
-    app.trajectory(traj);
+    app.trajectory(traj, "red");
 
     return app.exec();
 }

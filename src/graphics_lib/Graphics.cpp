@@ -176,20 +176,22 @@ namespace graphics_lib {
             Vector3 position;
             Color3 color;
         };
-        Containers::Array<VertexData> vertices;
+        Containers::Array<VertexData> vertices{size_t(trajectory.rows())};
         Containers::Array<UnsignedShort> indices;
 
-        for (size_t i = 0; i < trajectory.rows(); i++) {
+        for (size_t i = 0; i < trajectory.rows() - 1; i++) {
             Eigen::Vector3f vertex = trajectory.row(i).cast<float>();
-            arrayAppend(vertices, Corrade::InPlaceInit, Vector3(vertex), Color3::green());
+            Color3 color = tools::color<Color3>(color_to_set);
+            vertices[i] = VertexData{Vector3(vertex), color};
             arrayAppend(indices, i);
             arrayAppend(indices, i + 1);
         }
-        arrayAppend(indices, indices.size() - 1);
+        Eigen::Vector3f vertex = trajectory.row(trajectory.rows() - 1).cast<float>();
+        vertices[trajectory.rows() - 1] = VertexData{Vector3(vertex), Color3::green()};
 
         // Vertex buffer
         GL::Buffer vertex_buffer;
-        vertex_buffer.setData(vertices);
+        vertex_buffer.setData(vertices, GL::BufferUsage::StaticDraw);
 
         // Index buffer
         GL::Buffer index_buffer;
